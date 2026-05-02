@@ -302,6 +302,24 @@ button {
   animation: pulse 0.6s ease;
 }
 
+.empty-state,
+.data-notice {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px dashed #bfd4f5;
+  border-radius: 6px;
+  color: var(--muted);
+  background: #f8fbff;
+  line-height: 1.6;
+}
+
+.empty-state.error,
+.data-notice.error {
+  color: var(--red);
+  border-color: #ffcaca;
+  background: #fff4f4;
+}
+
 .patient-header {
   min-height: 124px;
   display: grid;
@@ -426,6 +444,53 @@ button {
   margin-top: 10px;
   padding: 14px;
   border-color: #86adff;
+}
+
+.skill-panel {
+  margin-top: 10px;
+  padding: 14px;
+}
+
+.skill-empty {
+  color: var(--muted);
+}
+
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.skill-grid article {
+  min-height: 116px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfdff;
+}
+
+.skill-grid article div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.skill-grid article strong {
+  color: var(--blue);
+}
+
+.skill-grid article span,
+.skill-grid article em {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 12px;
+}
+
+.skill-grid article p {
+  margin: 0;
+  color: #465672;
+  line-height: 1.55;
 }
 
 .section-heading {
@@ -1158,6 +1223,10 @@ td {
   }
 
   .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .skill-grid {
     grid-template-columns: 1fr 1fr;
   }
 

@@ -5,6 +5,14 @@
     selectedPatientId: "p001",
     search: "",
     activeMainTab: "dialog",
+    patients: [...mock.patients],
+    statusTabs: [...mock.statusTabs],
+    patientContext: window.PatientService.mockContext(mock.patients[0]),
+    skillResults: {},
+    dataLoading: false,
+    contextLoading: false,
+    dataError: "",
+    contextError: "",
     assistantMessages: [...mock.aiAssistantHistory],
     isAiLoading: false,
     aiError: ""
@@ -28,23 +36,20 @@
   }
 
   function selectedPatient() {
-    return mock.patients.find((patient) => patient.id === state.selectedPatientId) || mock.patients[0];
+    return state.patients.find((patient) => patient.id === state.selectedPatientId) || state.patients[0] || mock.patients[0];
   }
 
-  function patientContext(patient) {
-    return {
-      patient,
-      hypertensionHistory: mock.hypertensionHistory,
-      imaging: mock.imaging,
-      ultrasound: mock.ultrasound,
-      lis: mock.lis,
-      medications: mock.medications
-    };
+  function clinicalContext() {
+    return state.patientContext || window.PatientService.mockContext(selectedPatient());
+  }
+
+  function patientContext() {
+    return window.PatientContextBuilder.build(clinicalContext());
   }
 
   function filteredPatients() {
     const keyword = state.search.trim().toLowerCase();
-    return mock.patients.filter((patient) => {
+    return state.patients.filter((patient) => {
       const inStatus = patient.status === state.status;
       if (!keyword) return inStatus;
       return (
@@ -63,7 +68,7 @@
   }
 
   function renderStatusTabs() {
-    els.statusTabs.innerHTML = mock.statusTabs
+    els.statusTabs.innerHTML = state.statusTabs
       .map(
         (tab) => `
           <button class="${state.status === tab.key ? "active" : ""}" type="button" data-status="${tab.key}">
@@ -76,6 +81,18 @@
 
   function renderPatientList() {
     const patients = filteredPatients();
+    if (state.dataLoading) {
+      els.patientList.innerHTML = '<div class="empty-state">正在读取今日就诊患者...</div>';
+      return;
+    }
+    if (state.dataError) {
+      els.patientList.innerHTML = `<div class="empty-state error">${state.dataError}</div>`;
+      return;
+    }
+    if (!patients.length) {
+      els.patientList.innerHTML = '<div class="empty-state">暂无匹配患者</div>';
+      return;
+    }
     els.patientList.innerHTML = patients
       .map(
         (patient) => `
@@ -156,7 +173,8 @@
   }
 
   function renderAiSummary(patient) {
-    const summary = patient.summary || mock.patients[0].summary;
+    const skillSummary = state.skillResults.patient_summary?.summaryCard;
+    const summary = skillSummary || patient.summary || mock.patients[0].summary;
     return `
       <section class="ai-summary panel">
         <div class="section-heading">
@@ -193,6 +211,66 @@
     `;
   }
 
+  function renderSkillResultPanel() {
+    const results = Object.values(state.skillResults);
+    if (!results.length) {
+      return `
+        <section class="panel skill-panel">
+          <div class="section-heading">
+            <h3>OpenClaw Skill结果</h3>
+            <small>尚未触发AI技能，点击右侧快捷能力开始分析</small>
+          </div>
+          <div class="skill-empty">可展示病情总结、检查解读、用药建议、病历文书和实时问诊抽取结果。</div>
+        </section>
+      `;
+    }
+
+    return `
+      <section class="panel skill-panel">
+        <div class="section-heading">
+          <h3>OpenClaw Skill结果</h3>
+          <small>结构化结果已同步到页面模块</small>
+        </div>
+        <div class="skill-grid">
+          ${results
+            .map(
+              (result) => `
+                <article>
+                  <div><strong>${skillTitle(result.skill)}</strong>${result.confidence ? `<span>置信度 ${(result.confidence * 100).toFixed(0)}%</span>` : ""}</div>
+                  <p>${result.displayText || result.recordDraft || "已返回结构化结果"}</p>
+                  ${result.warnings?.length ? `<em>${result.warnings.join("；")}</em>` : ""}
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderContextNotice() {
+    if (state.contextLoading) {
+      return '<div class="data-notice">正在读取患者病历、检查、检验和用药数据...</div>';
+    }
+    if (state.contextError) {
+      return `<div class="data-notice error">${state.contextError}</div>`;
+    }
+    return "";
+  }
+
+  function skillTitle(skill) {
+    const titles = {
+      patient_summary: "病情总结",
+      lab_interpretation: "检查解读",
+      medication_advice: "用药建议",
+      medical_record_generation: "病历文书",
+      consultation_extraction: "问诊抽取",
+      diagnosis_suggestion: "诊断建议",
+      general_consultation_chat: "智能问答"
+    };
+    return titles[skill] || skill;
+  }
+
   function renderTable(rows, columns) {
     return `
       <table>
@@ -222,22 +300,25 @@
   }
 
   function renderWaiting(patient) {
+    const ctx = clinicalContext();
     els.mainPanel.innerHTML = `
       ${renderPatientHeader(patient)}
+      ${renderContextNotice()}
       ${renderAiSummary(patient)}
+      ${renderSkillResultPanel()}
       <section class="dashboard-grid">
         <article class="panel history-card">
           <div class="section-heading"><h3>高血压病史 <small>病程 10年</small></h3></div>
-          <div class="history-list">${infoList(mock.hypertensionHistory)}</div>
+          <div class="history-list">${infoList(ctx.hypertensionHistory)}</div>
           <button class="text-link" type="button">展开更多⌄</button>
         </article>
         <article class="panel exam-card">
           <div class="section-heading"><h3>影像检查结论 <small>本院</small></h3><button type="button">查看更多 ›</button></div>
-          <ul class="exam-list">${examList(mock.imaging)}</ul>
+          <ul class="exam-list">${examList(ctx.imaging)}</ul>
         </article>
         <article class="panel exam-card">
           <div class="section-heading"><h3>超声检查结论 <small>本院</small></h3><button type="button">查看更多 ›</button></div>
-          <ul class="exam-list">${examList(mock.ultrasound)}</ul>
+          <ul class="exam-list">${examList(ctx.ultrasound)}</ul>
         </article>
         <article class="panel chart-card">
           <div class="section-heading"><h3>血脂检查趋势 <small>近2年</small></h3><span>单位：mmol/L</span></div>
@@ -245,7 +326,7 @@
         </article>
         <article class="panel table-card">
           <div class="section-heading"><h3>LIS检验信息 <small>最近</small></h3><button type="button">查看更多 ›</button></div>
-          ${renderTable(mock.lis, [
+          ${renderTable(ctx.lis, [
             { key: "item", label: "检验项目" },
             { key: "result", label: "结果" },
             { key: "trend", label: "" },
@@ -256,7 +337,7 @@
         </article>
         <article class="panel table-card">
           <div class="section-heading"><h3>当前用药 <small>患者自述/处方记录</small></h3><span>更新于 2024-05-18</span></div>
-          ${renderTable(mock.medications, [
+          ${renderTable(ctx.medications, [
             { key: "name", label: "药品名称" },
             { key: "spec", label: "规格" },
             { key: "usage", label: "用法用量" },
@@ -284,8 +365,11 @@
   }
 
   function renderConsultation(patient) {
+    const ctx = clinicalContext();
+    const extraction = state.skillResults.consultation_extraction?.extraction;
     els.mainPanel.innerHTML = `
       ${renderPatientHeader(patient, true)}
+      ${renderContextNotice()}
       <nav class="main-tabs" id="mainTabs">
         ${[
           ["dialog", "问诊交流"],
@@ -304,7 +388,7 @@
             <label class="switch">显示时间戳<input type="checkbox" checked /><span></span></label>
           </div>
           <div class="dialog-list">
-            ${mock.consultDialog
+            ${ctx.consultDialog
               .map(
                 (msg) => `
                   <div class="dialog-row ${msg.role}">
@@ -332,11 +416,11 @@
         <article class="consult-side">
           <section class="panel extracted-card">
             <div class="section-heading"><h3>实时提取信息 <small>AI分析中...</small></h3></div>
-            <div class="extract-block"><h4>主诉</h4><p>头晕 1周，晨起明显，伴心慌</p></div>
-            <div class="extract-block"><h4>现病史</h4><ul><li>头晕 1周，晨起明显</li><li>心慌，偶发</li><li>乏力，活动后气促</li></ul></div>
-            <div class="extract-block"><h4>生命体征（患者自述）</h4><p>血压：160/95 mmHg（晨起）<br />145/88 mmHg（服药后）</p></div>
-            <div class="extract-block"><h4>否认症状</h4><p>否认胸痛；否认下肢水肿</p></div>
-            <div class="extract-block"><h4>患者关注点</h4><p>血脂检查结果</p></div>
+            <div class="extract-block"><h4>主诉</h4><p>${extraction?.chiefComplaint || "头晕 1周，晨起明显，伴心慌"}</p></div>
+            <div class="extract-block"><h4>现病史</h4><p>${extraction?.presentIllness || "头晕 1周，晨起明显；心慌偶发；乏力，活动后气促"}</p></div>
+            <div class="extract-block"><h4>生命体征（患者自述）</h4><p>${extraction?.vitals?.bloodPressure || "血压：160/95 mmHg（晨起）；145/88 mmHg（服药后）"}</p></div>
+            <div class="extract-block"><h4>否认症状</h4><p>${(extraction?.negativeSymptoms || ["否认胸痛", "否认下肢水肿"]).join("；")}</p></div>
+            <div class="extract-block"><h4>患者关注点</h4><p>${(extraction?.patientConcerns || ["血脂检查结果"]).join("；")}</p></div>
           </section>
           <section class="panel compact-list">
             <div class="section-heading"><h3>本次检查/检验信息</h3><button type="button">⌄</button></div>
@@ -346,10 +430,11 @@
           </section>
           <section class="panel compact-list">
             <div class="section-heading"><h3>本次用药情况</h3></div>
-            <p><b>目前用药（未变更）</b>${mock.medications.slice(0, 3).map((med) => `<span>${med.name} ${med.spec} ${med.usage}</span>`).join("")}</p>
+            <p><b>目前用药（未变更）</b>${ctx.medications.slice(0, 3).map((med) => `<span>${med.name} ${med.spec} ${med.usage}</span>`).join("")}</p>
           </section>
         </article>
       </section>
+      ${renderSkillResultPanel()}
       <footer class="action-bar">
         <button type="button">病历书写</button>
         <button type="button">检查开单</button>
@@ -362,6 +447,8 @@
   }
 
   function renderAssistant(patient) {
+    const diagnosis = state.skillResults.diagnosis_suggestion?.diagnosis;
+    const extraction = state.skillResults.consultation_extraction?.extraction;
     els.aiPanel.innerHTML = `
       <section class="panel ai-assistant">
         <div class="assistant-head">
@@ -374,6 +461,7 @@
           <button type="button" data-ai-action="labs">解读检查结果</button>
           <button type="button" data-ai-action="medication">用药建议参考</button>
           <button type="button" data-ai-action="record">生成病历文书</button>
+          ${patient.status === "active" ? '<button type="button" data-ai-action="extraction">实时信息抽取</button><button type="button" data-ai-action="diagnosis">鉴别诊断建议</button>' : ""}
         </div>
         <div class="assistant-tabs"><button class="active" type="button">对话</button><button type="button">病情脉络</button></div>
         <div class="assistant-messages" id="assistantMessages">
@@ -406,13 +494,13 @@
               <p><span class="dot"></span>生成建议</p>
               <h3>AI分析结果</h3>
               <h4>病情初步判断</h4>
-              <p>考虑血压控制不稳定，合并血脂异常，存在心血管风险，需排查继发性高血压及靶器官损害。</p>
+              <p>${diagnosis?.assessment || "考虑血压控制不稳定，合并血脂异常，存在心血管风险，需排查继发性高血压及靶器官损害。"}</p>
               <h4>鉴别诊断建议</h4>
-              <ol><li>原发性高血压（血压控制不佳）</li><li>继发性高血压（需排查）</li><li>心律失常（需心电图进一步评估）</li></ol>
+              <ol>${(diagnosis?.differential || ["原发性高血压（血压控制不佳）", "继发性高血压（需排查）", "心律失常（需心电图进一步评估）"]).map((item) => `<li>${item}</li>`).join("")}</ol>
               <h4>下一步建议</h4>
-              <ul><li>等待检查结果，重点关注心脏超声、胸部CT及血脂结果</li><li>建议完善心电图检查</li><li>评估降压方案是否需要调整</li></ul>
+              <ul>${(diagnosis?.nextSteps || ["等待检查结果，重点关注心脏超声、胸部CT及血脂结果", "建议完善心电图检查", "评估降压方案是否需要调整"]).map((item) => `<li>${item}</li>`).join("")}</ul>
               <h3>对话总结</h3>
-              <p>患者主诉头晕伴心慌1周，晨起血压高，乏力气促，无胸痛及下肢水肿，关注血脂检查结果。</p>
+              <p>${extraction ? `${extraction.chiefComplaint}；${extraction.presentIllness}` : "患者主诉头晕伴心慌1周，晨起血压高，乏力气促，无胸痛及下肢水肿，关注血脂检查结果。"}</p>
             </section>`
           : ""
       }
@@ -433,7 +521,7 @@
   function renderAll() {
     const patients = filteredPatients();
     if (!patients.some((patient) => patient.id === state.selectedPatientId)) {
-      state.selectedPatientId = patients[0]?.id || mock.patients.find((patient) => patient.status === state.status)?.id || mock.patients[0].id;
+      state.selectedPatientId = patients[0]?.id || state.patients.find((patient) => patient.status === state.status)?.id || mock.patients[0].id;
     }
     renderStatusTabs();
     renderPatientList();
@@ -442,6 +530,7 @@
   }
 
   function fallbackChart(container) {
+    const lipids = clinicalContext().lipids;
     const canvas = document.createElement("canvas");
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight || 260;
@@ -449,10 +538,10 @@
     container.appendChild(canvas);
     const ctx = canvas.getContext("2d");
     const series = [
-      { values: mock.lipids.tc, color: "#2f6bff" },
-      { values: mock.lipids.tg, color: "#18a058" },
-      { values: mock.lipids.ldl, color: "#7757f6" },
-      { values: mock.lipids.hdl, color: "#f28c28" }
+      { values: lipids.tc, color: "#2f6bff" },
+      { values: lipids.tg, color: "#18a058" },
+      { values: lipids.ldl, color: "#7757f6" },
+      { values: lipids.hdl, color: "#f28c28" }
     ];
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "#e7edf7";
@@ -479,6 +568,7 @@
   function renderLipidChart() {
     const container = document.getElementById("lipidChart");
     if (!container) return;
+    const lipids = clinicalContext().lipids;
     if (!window.echarts) {
       fallbackChart(container);
       return;
@@ -489,13 +579,13 @@
       tooltip: { trigger: "axis", backgroundColor: "#ffffff", borderColor: "#d8e3f4", textStyle: { color: "#1f2a44" } },
       legend: { bottom: 0, itemWidth: 10, itemHeight: 6, textStyle: { color: "#5d6b82", fontSize: 11 } },
       grid: { left: 36, right: 20, top: 24, bottom: 42 },
-      xAxis: { type: "category", boundaryGap: false, data: mock.lipids.dates, axisLine: { lineStyle: { color: "#d9e2ef" } }, axisLabel: { color: "#6b7890", fontSize: 11 } },
+      xAxis: { type: "category", boundaryGap: false, data: lipids.dates, axisLine: { lineStyle: { color: "#d9e2ef" } }, axisLabel: { color: "#6b7890", fontSize: 11 } },
       yAxis: { type: "value", min: 0, max: 6, splitLine: { lineStyle: { color: "#ecf1f8" } }, axisLabel: { color: "#6b7890", fontSize: 11 } },
       series: [
-        { name: "TC（总胆固醇）", type: "line", smooth: true, symbolSize: 5, data: mock.lipids.tc },
-        { name: "TG（甘油三酯）", type: "line", smooth: true, symbolSize: 5, data: mock.lipids.tg },
-        { name: "LDL-C（低密度脂蛋白）", type: "line", smooth: true, symbolSize: 5, data: mock.lipids.ldl },
-        { name: "HDL-C（高密度脂蛋白）", type: "line", smooth: true, symbolSize: 5, data: mock.lipids.hdl }
+        { name: "TC（总胆固醇）", type: "line", smooth: true, symbolSize: 5, data: lipids.tc },
+        { name: "TG（甘油三酯）", type: "line", smooth: true, symbolSize: 5, data: lipids.tg },
+        { name: "LDL-C（低密度脂蛋白）", type: "line", smooth: true, symbolSize: 5, data: lipids.ldl },
+        { name: "HDL-C（高密度脂蛋白）", type: "line", smooth: true, symbolSize: 5, data: lipids.hdl }
       ]
     });
     window.addEventListener("resize", () => chart.resize(), { passive: true });
@@ -503,6 +593,7 @@
 
   async function sendAiPrompt(prompt, action = "chat") {
     const patient = selectedPatient();
+    const skill = window.SkillResultMapper.actionToSkill[action] || window.SkillResultMapper.actionToSkill.chat;
     state.aiError = "";
     state.assistantMessages.push({ role: "user", text: prompt, time: nowTime() });
     state.isAiLoading = true;
@@ -512,9 +603,10 @@
     state.assistantMessages.push(assistantMessage);
 
     try {
-      await window.OpenClawClient.sendMessage({
+      await window.OpenClawSkillService.runSkill({
+        skill,
         action,
-        patientContext: patientContext(patient),
+        patientContext: patientContext(),
         messages: state.assistantMessages.map((message) => ({
           role: message.role,
           content: message.text
@@ -523,6 +615,12 @@
           assistantMessage.text += token;
           state.isAiLoading = false;
           renderAssistant(patient);
+        },
+        onSkillResult: (payload) => {
+          const mapped = window.SkillResultMapper.normalize(skill, payload);
+          state.skillResults = { ...state.skillResults, [skill]: mapped };
+          window.AppStore.setSkillResult(skill, mapped);
+          renderAll();
         }
       });
     } catch (error) {
@@ -534,23 +632,67 @@
     }
   }
 
+  async function loadPatientContext(patient) {
+    state.contextLoading = true;
+    state.contextError = "";
+    renderMain();
+    try {
+      state.patientContext = await window.PatientService.fetchVisitContext(patient);
+    } catch (error) {
+      state.contextError = error.message || "患者上下文读取失败，已使用本地模拟数据。";
+      state.patientContext = window.PatientService.mockContext(patient);
+    } finally {
+      state.contextLoading = false;
+      renderAll();
+    }
+  }
+
+  async function selectPatient(patientId) {
+    state.selectedPatientId = patientId;
+    const patient = selectedPatient();
+    state.status = patient.status;
+    state.skillResults = {};
+    await loadPatientContext(patient);
+  }
+
+  async function loadTodayPatients() {
+    state.dataLoading = true;
+    state.dataError = "";
+    renderStatusTabs();
+    renderPatientList();
+    try {
+      const result = await window.PatientService.fetchTodayVisits(state.status);
+      state.patients = result.patients;
+      state.statusTabs = result.statusTabs;
+      if (!state.patients.some((patient) => patient.id === state.selectedPatientId)) {
+        state.selectedPatientId = state.patients.find((patient) => patient.status === state.status)?.id || state.patients[0]?.id || state.selectedPatientId;
+      }
+      await loadPatientContext(selectedPatient());
+    } catch (error) {
+      state.dataError = error.message || "今日就诊列表读取失败，已使用本地模拟数据。";
+      state.patients = mock.patients;
+      state.statusTabs = mock.statusTabs;
+      state.patientContext = window.PatientService.mockContext(selectedPatient());
+    } finally {
+      state.dataLoading = false;
+      renderAll();
+    }
+  }
+
   function bindEvents() {
     document.addEventListener("click", (event) => {
       const statusButton = event.target.closest("[data-status]");
       if (statusButton) {
         state.status = statusButton.dataset.status;
-        const first = mock.patients.find((patient) => patient.status === state.status);
+        const first = state.patients.find((patient) => patient.status === state.status);
         if (first) state.selectedPatientId = first.id;
-        renderAll();
+        loadPatientContext(selectedPatient());
         return;
       }
 
       const patientButton = event.target.closest("[data-patient-id]");
       if (patientButton) {
-        state.selectedPatientId = patientButton.dataset.patientId;
-        const patient = selectedPatient();
-        state.status = patient.status;
-        renderAll();
+        selectPatient(patientButton.dataset.patientId);
         return;
       }
 
@@ -561,7 +703,9 @@
           summary: "请结合患者上下文快速总结病情。",
           labs: "请解读这位患者最近的检查检验结果。",
           medication: "请给出这位患者的用药建议参考。",
-          record: "请生成本次问诊病历文书草稿。"
+          record: "请生成本次问诊病历文书草稿。",
+          extraction: "请从当前医患对话中实时提取主诉、现病史、生命体征、否认症状和患者关注点。",
+          diagnosis: "请结合患者上下文给出初步判断、鉴别诊断和下一步建议。"
         };
         sendAiPrompt(prompts[action], action);
         return;
@@ -569,10 +713,11 @@
 
       const startConsult = event.target.closest("#startConsult");
       if (startConsult) {
-        const active = mock.patients.find((patient) => patient.status === "active" && patient.visitNo === selectedPatient().visitNo) || mock.patients.find((patient) => patient.status === "active");
+        const active = state.patients.find((patient) => patient.status === "active" && patient.visitNo === selectedPatient().visitNo) || state.patients.find((patient) => patient.status === "active");
+        if (!active) return;
         state.status = "active";
         state.selectedPatientId = active.id;
-        renderAll();
+        loadPatientContext(active);
       }
     });
 
@@ -593,10 +738,11 @@
 
     els.refresh.addEventListener("click", () => {
       els.refresh.classList.add("spinning");
-      window.setTimeout(() => els.refresh.classList.remove("spinning"), 600);
+      loadTodayPatients().finally(() => window.setTimeout(() => els.refresh.classList.remove("spinning"), 600));
     });
   }
 
   bindEvents();
   renderAll();
+  loadTodayPatients();
 })();
