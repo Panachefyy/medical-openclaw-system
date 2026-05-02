@@ -122,23 +122,43 @@ button {
 
 .icon-action {
   position: relative;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
-  background: transparent;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
+  font-size: 20px;
   font-weight: 700;
+  line-height: 1;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.icon-action:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .icon-action em {
   position: absolute;
-  top: -8px;
-  right: -12px;
+  top: -4px;
+  right: -5px;
   min-width: 18px;
   height: 18px;
+  padding: 0 4px;
   line-height: 18px;
   border-radius: 9px;
   background: var(--red);
   font-size: 11px;
   font-style: normal;
+  text-align: center;
+}
+
+#fullscreenToggle {
+  font-size: 18px;
 }
 
 .doctor-profile {
@@ -575,7 +595,7 @@ button {
 
 .dashboard-grid .chart-card,
 .dashboard-grid .table-card {
-  min-height: 280px;
+  min-height: 300px;
 }
 
 .history-card,
@@ -627,7 +647,7 @@ button {
 
 .chart {
   width: 100%;
-  height: 230px;
+  height: 308px;
 }
 
 table {

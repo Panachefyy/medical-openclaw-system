@@ -487,8 +487,8 @@
     chart.setOption({
       color: ["#2f6bff", "#18a058", "#7757f6", "#f28c28"],
       tooltip: { trigger: "axis", backgroundColor: "#ffffff", borderColor: "#d8e3f4", textStyle: { color: "#1f2a44" } },
-      legend: { bottom: 0, itemWidth: 10, itemHeight: 6, textStyle: { color: "#5d6b82", fontSize: 11 } },
-      grid: { left: 36, right: 20, top: 24, bottom: 42 },
+      legend: { bottom: 10, itemWidth: 10, itemHeight: 6, textStyle: { color: "#5d6b82", fontSize: 11 } },
+      grid: { left: 36, right: 20, top: 24, bottom: 110 },
       xAxis: { type: "category", boundaryGap: false, data: mock.lipids.dates, axisLine: { lineStyle: { color: "#d9e2ef" } }, axisLabel: { color: "#6b7890", fontSize: 11 } },
       yAxis: { type: "value", min: 0, max: 6, splitLine: { lineStyle: { color: "#ecf1f8" } }, axisLabel: { color: "#6b7890", fontSize: 11 } },
       series: [
