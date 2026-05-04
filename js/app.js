@@ -10,6 +10,8 @@
     aiError: "",
     aiPanelCollapsed: false
   };
+  let lipidChart = null;
+  let layoutRefreshTimer = null;
 
   const els = {
     statusTabs: document.getElementById("statusTabs"),
@@ -583,6 +585,28 @@
     renderAssistant(selectedPatient());
   }
 
+  function refreshMainLayout() {
+    if (layoutRefreshTimer) window.clearTimeout(layoutRefreshTimer);
+    els.mainPanel.classList.add("layout-refreshing");
+    layoutRefreshTimer = window.setTimeout(() => {
+      els.mainPanel.classList.remove("layout-refreshing");
+    }, 260);
+
+    requestAnimationFrame(() => {
+      if (lipidChart) lipidChart.resize();
+      if (!window.echarts) {
+        const container = document.getElementById("lipidChart");
+        if (container?.querySelector("canvas")) fallbackChart(container);
+      }
+    });
+  }
+
+  function refreshMainLayoutAfterTransition() {
+    [80, 260, 420].forEach((delay) => {
+      window.setTimeout(refreshMainLayout, delay);
+    });
+  }
+
   function fallbackChart(container) {
     const canvas = document.createElement("canvas");
     canvas.width = container.clientWidth;
@@ -622,11 +646,13 @@
     const container = document.getElementById("lipidChart");
     if (!container) return;
     if (!window.echarts) {
+      lipidChart = null;
       fallbackChart(container);
       return;
     }
-    const chart = echarts.init(container);
-    chart.setOption({
+    if (lipidChart) lipidChart.dispose();
+    lipidChart = echarts.init(container);
+    lipidChart.setOption({
       color: ["#2f6bff", "#18a058", "#7757f6", "#f28c28"],
       tooltip: { trigger: "axis", backgroundColor: "#ffffff", borderColor: "#d8e3f4", textStyle: { color: "#1f2a44" } },
       legend: { bottom: 10, itemWidth: 10, itemHeight: 6, textStyle: { color: "#5d6b82", fontSize: 11 } },
@@ -640,7 +666,6 @@
         { name: "HDL-C（高密度脂蛋白）", type: "line", smooth: true, symbolSize: 5, data: mock.lipids.hdl }
       ]
     });
-    window.addEventListener("resize", () => chart.resize(), { passive: true });
   }
 
   async function sendAiPrompt(prompt, action = "chat") {
@@ -682,6 +707,7 @@
       if (aiPanelToggle) {
         state.aiPanelCollapsed = !state.aiPanelCollapsed;
         renderAssistant(selectedPatient());
+        refreshMainLayoutAfterTransition();
         return;
       }
 
@@ -758,5 +784,6 @@
   }
 
   bindEvents();
+  window.addEventListener("resize", refreshMainLayoutAfterTransition, { passive: true });
   renderAll();
 })();
