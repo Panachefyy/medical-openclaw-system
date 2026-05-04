@@ -318,8 +318,8 @@
       </nav>
       <section class="consult-layout">
         <article class="panel dialog-panel">
-          <div class="section-heading">
-            <h3>医患对话 <small>语音识别实时进行中...</small></h3>
+          <div class="section-heading live-heading">
+            <h3>医患对话 <small><span class="live-dot"></span>语音识别实时进行中...</small></h3>
             <label class="switch">显示时间戳<input type="checkbox" checked /><span></span></label>
           </div>
           <div class="dialog-list">
@@ -339,7 +339,7 @@
           </div>
           <div class="voice-input">
             <input type="text" placeholder="输入文字或按住说话（语音也将被识别）..." />
-            <button type="button">🎙</button>
+            <button class="recording-btn" type="button">🎙</button>
             <button type="button">➤</button>
           </div>
           <div class="quick-row">
@@ -349,8 +349,8 @@
           </div>
         </article>
         <article class="consult-side">
-          <section class="panel extracted-card">
-            <div class="section-heading"><h3>实时提取信息 <small>AI分析中...</small></h3></div>
+          <section class="panel extracted-card live-panel">
+            <div class="section-heading live-heading"><h3>实时提取信息 <small><span class="live-dot"></span>AI分析中...</small></h3></div>
             <div class="extract-block"><h4>主诉</h4><p>头晕 1周，晨起明显，伴心慌</p></div>
             <div class="extract-block"><h4>现病史</h4><ul><li>头晕 1周，晨起明显</li><li>心慌，偶发</li><li>乏力，活动后气促</li></ul></div>
             <div class="extract-block"><h4>生命体征（患者自述）</h4><p>血压：160/95 mmHg（晨起）<br />145/88 mmHg（服药后）</p></div>
@@ -425,8 +425,8 @@
       </section>
       ${
         patient.status === "active"
-          ? `<section class="panel ai-runtime">
-              <h3>分析进度</h3>
+          ? `<section class="panel ai-runtime live-panel">
+              <h3><span class="live-dot"></span>分析进度</h3>
               <p><span class="dot done"></span>语音识别</p>
               <p><span class="dot done"></span>信息提取</p>
               <p><span class="dot active"></span>病情分析</p>
