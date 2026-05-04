@@ -1,0 +1,19 @@
+{
+  "name": "临床问诊助手 - 医生工作台",
+  "short_name": "问诊助手",
+  "description": "临床问诊助手医生工作台静态演示应用",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f8fd",
+  "theme_color": "#0052cc",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "./assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

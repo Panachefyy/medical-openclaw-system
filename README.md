@@ -24,6 +24,28 @@ python3 -m http.server 4174 --bind 127.0.0.1
 http://127.0.0.1:4174/
 ```
 
+## Chrome 安装版（PWA）
+
+项目支持通过 Chrome 安装为本地应用。先启动本地静态服务：
+
+```bash
+python3 -m http.server 4174 --bind 127.0.0.1
+```
+
+然后用 Chrome 访问：
+
+```text
+http://127.0.0.1:4174/
+```
+
+在地址栏右侧点击“安装”图标，或进入 Chrome 菜单：
+
+```text
+保存和分享 -> 安装页面为应用
+```
+
+安装后会以独立窗口运行，并使用 `manifest.webmanifest` 和 `sw.js` 缓存本地静态资源。
+
 ## 接入 OpenClaw
 
 当前 `js/api.js` 会读取 `window.OPENCLAW_CONFIG` 或 `localStorage.OPENCLAW_CONFIG`。未配置 `endpoint` 时使用 mock 流式回复。

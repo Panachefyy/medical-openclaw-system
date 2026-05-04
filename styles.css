@@ -70,10 +70,10 @@ button {
 }
 
 .brand-mark {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: radial-gradient(circle at 70% 25%, #cfe2ff 0 26%, transparent 27%), linear-gradient(135deg, #f8fbff 0 45%, #73a7ff 46% 100%);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 26, 71, 0.18);
 }
 
 .brand h1 {
