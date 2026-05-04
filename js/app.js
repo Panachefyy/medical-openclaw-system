@@ -364,8 +364,10 @@
   }
 
   function renderAssistant(patient) {
+    const hasRuntime = patient.status === "active";
     els.workspace.classList.toggle("ai-collapsed", state.aiPanelCollapsed);
-    els.aiPanel.className = `ai-panel ${patient.status === "active" ? "has-runtime" : ""} ${state.aiPanelCollapsed ? "is-collapsed" : ""}`;
+    els.workspace.classList.toggle("ai-runtime-visible", hasRuntime);
+    els.aiPanel.className = `ai-panel ${hasRuntime ? "has-runtime" : ""} ${state.aiPanelCollapsed ? "is-collapsed" : ""}`;
     els.aiPanel.innerHTML = `
       <button class="ai-panel-handle" type="button" data-ai-panel-toggle aria-label="展开AI智能助手" title="展开AI智能助手">
         <span>问AI</span>
