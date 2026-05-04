@@ -606,7 +606,6 @@
         const active = mock.patients.find((patient) => patient.status === "active" && patient.visitNo === selectedPatient().visitNo) || mock.patients.find((patient) => patient.status === "active");
         state.status = "active";
         state.selectedPatientId = active.id;
-        state.aiPanelCollapsed = true;
         renderAll();
         return;
       }
@@ -618,7 +617,6 @@
         if (!done) return;
         state.status = "done";
         state.selectedPatientId = done.id;
-        state.aiPanelCollapsed = false;
         renderAll();
       }
     });

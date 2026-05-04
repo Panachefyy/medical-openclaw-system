@@ -223,7 +223,7 @@ button {
 .workspace {
   height: calc(100vh - 56px);
   display: grid;
-  grid-template-columns: 260px minmax(760px, 1fr) minmax(32px, 300px);
+  grid-template-columns: 280px minmax(760px, 1fr) minmax(32px, 300px);
   gap: 12px;
   padding: 12px;
   overflow: hidden;
@@ -231,15 +231,15 @@ button {
 }
 
 .workspace.ai-collapsed {
-  grid-template-columns: 260px minmax(760px, 1fr) 32px;
+  grid-template-columns: 280px minmax(760px, 1fr) 32px;
 }
 
 .workspace.ai-runtime-visible {
-  grid-template-columns: 260px minmax(760px, 1fr) 612px;
+  grid-template-columns: 280px minmax(760px, 1fr) 612px;
 }
 
 .workspace.ai-runtime-visible.ai-collapsed {
-  grid-template-columns: 260px minmax(760px, 1fr) 344px;
+  grid-template-columns: 280px minmax(760px, 1fr) 344px;
 }
 
 .patient-sidebar,
@@ -324,6 +324,7 @@ button {
 .segmented button {
   height: 34px;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
 }
 
 .segmented button.active,
@@ -1089,7 +1090,7 @@ td {
   min-height: 0;
   display: grid;
   place-items: center;
-  align-self: center;
+  align-self: start;
   gap: 6px;
   padding: 10px 0;
   border: 1px solid #86adff;
