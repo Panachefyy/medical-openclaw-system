@@ -67,8 +67,112 @@
   function currentStatusTabs() {
     return mock.statusTabs.map((tab) => ({
       ...tab,
-      count: Math.max(mock.patients.filter((patient) => patient.status === tab.key).length, tab.count)
+      count: mock.patients.filter((patient) => patient.status === tab.key).length
     }));
+  }
+
+  function fallbackSummary(patient) {
+    return {
+      overview: `${patient.name}，${patient.age}岁，${patient.tag || "待评估"}患者，本次就诊资料已汇总，建议结合病史、检查检验和用药情况继续评估。`,
+      features: [patient.tag || "待评估", patient.department || "门诊", patient.allergy && patient.allergy !== "无" ? `${patient.allergy}` : "无明确过敏史"],
+      important: [
+        { label: "过敏史", value: patient.allergy || "无", level: patient.allergy && patient.allergy !== "无" ? "danger" : "" },
+        { label: "本次就诊", value: patient.visitDate || "--" }
+      ],
+      medications: [{ label: "当前用药", count: 0 }],
+      suggestions: ["补充完整病史和检查资料", "结合临床实际评估诊疗方案"]
+    };
+  }
+
+  function patientProfile(patient) {
+    const tag = patient.tag || "";
+    if (/糖尿病/.test(tag)) {
+      return {
+        historyTitle: "糖尿病病史",
+        historyMeta: "代谢管理",
+        historyRows: [
+          ["首次诊断", "2018-06-20"],
+          ["近期血糖", "空腹 7.8-9.2 mmol/L"],
+          ["相关症状", "偶有乏力，无明显多饮多尿"],
+          ["并发症筛查", "建议复查尿微量白蛋白、眼底"],
+          ["生活方式", "主食控制一般，餐后运动不足"]
+        ],
+        advice: ["复查 HbA1c，评估近3个月血糖控制", "加强餐后血糖监测和饮食记录", "结合肾功能和低血糖风险调整降糖方案"]
+      };
+    }
+    if (/冠心病/.test(tag)) {
+      return {
+        historyTitle: "冠心病病史",
+        historyMeta: "PCI术后随访",
+        historyRows: [
+          ["既往病史", "冠心病，PCI术后"],
+          ["近期症状", "活动后胸闷 3 天"],
+          ["风险因素", "高龄，血脂异常，高血压病史"],
+          ["当前重点", "排查心肌缺血和心律失常"],
+          ["随访建议", "复核心电图、肌钙蛋白和用药依从性"]
+        ],
+        advice: ["优先排查心肌缺血相关风险", "完善心电图及心肌损伤标志物", "复核抗血小板和调脂治疗方案"]
+      };
+    }
+    if (/高血脂/.test(tag)) {
+      return {
+        historyTitle: "高血脂病史",
+        historyMeta: "血脂管理",
+        historyRows: [
+          ["首次发现", "2022-08-18"],
+          ["近期血脂", "LDL-C仍需持续达标管理"],
+          ["相关风险", "需结合ASCVD风险分层"],
+          ["生活方式", "油脂摄入需控制，运动频率不足"],
+          ["随访计划", "8-12周复查血脂和肝功能"]
+        ],
+        advice: ["继续规律调脂治疗", "复查血脂四项和肝功能", "强化饮食控制和运动管理"]
+      };
+    }
+    if (/复诊/.test(tag)) {
+      return {
+        historyTitle: "复诊记录",
+        historyMeta: "长期随访",
+        historyRows: [
+          ["本次类型", "慢病复诊"],
+          ["病情变化", "近期无急性不适"],
+          ["用药情况", "自述规律服药"],
+          ["检查结果", "暂无明显异常报警项"],
+          ["随访计划", "按慢病管理周期复查"]
+        ],
+        advice: ["维持规律随访", "继续记录家庭监测数据", "按计划复查相关指标"]
+      };
+    }
+    return {
+      historyTitle: "高血压病史",
+      historyMeta: "病程 10年",
+      historyRows: mock.hypertensionHistory,
+      advice: ["继续监测血压，注意低盐饮食和规律运动", "评估调脂治疗依从性，关注LDL-C达标", "颈动脉斑块稳定，建议定期复查超声"]
+    };
+  }
+
+  function medicationRows(patient) {
+    const tag = patient.tag || "";
+    if (/糖尿病/.test(tag)) {
+      return [
+        { name: "二甲双胍缓释片", spec: "0.5g", usage: "每日2次 每次1片", purpose: "降糖" },
+        { name: "达格列净片", spec: "10mg", usage: "每日1次 每次1片", purpose: "降糖/心肾保护" },
+        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" }
+      ];
+    }
+    if (/冠心病/.test(tag)) {
+      return [
+        { name: "阿司匹林肠溶片", spec: "100mg", usage: "每日1次 每次1片", purpose: "抗血小板" },
+        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+        { name: "美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次1片", purpose: "控制心率" }
+      ];
+    }
+    if (/高血脂/.test(tag)) {
+      return [
+        { name: "瑞舒伐他汀钙片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+        { name: "辅酶Q10软胶囊", spec: "10mg", usage: "每日2次 每次1粒", purpose: "辅助治疗" }
+      ];
+    }
+    return mock.medications;
   }
 
   function renderStatusTabs() {
@@ -104,8 +208,13 @@
   }
 
   function renderPatientHeader(patient, compact = false) {
-    const statusTitle = patient.status === "done" ? "已完成" : "等待就诊";
-    const statusDetail = patient.status === "done" ? `完成时间 ${patient.completedAt || patient.visitDate || "--"}` : `预计等待 ${patient.waitEstimate || "约15分钟"}`;
+    const statusTitle = patient.status === "done" ? "已完成" : patient.status === "active" ? "接诊中" : "等待就诊";
+    const statusDetail =
+      patient.status === "done"
+        ? `完成时间 ${patient.completedAt || patient.visitDate || "--"}`
+        : patient.status === "active"
+          ? `开始时间 ${patient.consultStartedAt || "--"}`
+          : `预计等待 ${patient.waitEstimate || "约15分钟"}`;
     return `
       <section class="patient-header panel ${compact ? "compact" : ""}">
         <div class="avatar-large"></div>
@@ -129,7 +238,7 @@
         </div>
         ${
           compact
-            ? `<div class="consult-timer"><span></span>问诊时中 <strong id="timerText">00:06:35</strong><div class="voice-wave">${"<i></i>".repeat(32)}</div></div>`
+            ? `<div class="consult-timer"><span></span>问诊中 <strong id="timerText">00:06:35</strong><div class="voice-wave">${"<i></i>".repeat(32)}</div></div>`
             : `<div class="visit-card">
                 <h3>本次就诊</h3>
                 <p><span>就诊科室</span>${patient.department}</p>
@@ -167,7 +276,7 @@
   }
 
   function renderAiSummary(patient) {
-    const summary = patient.summary || mock.patients[0].summary;
+    const summary = patient.summary || fallbackSummary(patient);
     return `
       <section class="ai-summary panel">
         <div class="section-heading">
@@ -233,13 +342,15 @@
   }
 
   function renderWaiting(patient) {
+    const profile = patientProfile(patient);
+    const meds = medicationRows(patient);
     els.mainPanel.innerHTML = `
       ${renderPatientHeader(patient)}
       ${renderAiSummary(patient)}
       <section class="dashboard-grid">
         <article class="panel history-card">
-          <div class="section-heading"><h3>高血压病史 <small>病程 10年</small></h3></div>
-          <div class="history-list">${infoList(mock.hypertensionHistory)}</div>
+          <div class="section-heading"><h3>${profile.historyTitle} <small>${profile.historyMeta}</small></h3></div>
+          <div class="history-list">${infoList(profile.historyRows)}</div>
           <button class="text-link" type="button">展开更多⌄</button>
         </article>
         <article class="panel exam-card">
@@ -267,7 +378,7 @@
         </article>
         <article class="panel table-card">
           <div class="section-heading"><h3>当前用药 <small>患者自述/处方记录</small></h3><span>更新于 2024-05-18</span></div>
-          ${renderTable(mock.medications, [
+          ${renderTable(meds, [
             { key: "name", label: "药品名称" },
             { key: "spec", label: "规格" },
             { key: "usage", label: "用法用量" },
@@ -278,9 +389,7 @@
       <section class="panel ai-advice">
         <h3>问诊助手AI建议 <small>基于病史及检查结果</small></h3>
         <ol>
-          <li>血压控制总体尚可，建议继续监测血压，注意低盐饮食和规律运动。</li>
-          <li>血脂LDL-C较前略高，建议评估调脂治疗方案依从性，可考虑强化调脂治疗。</li>
-          <li>颈动脉斑块稳定，建议继续抗血小板治疗，定期复查超声。</li>
+          ${profile.advice.map((item) => `<li>${item}</li>`).join("")}
         </ol>
         <small>*AI建议仅供参考，请结合临床实际情况判断</small>
       </section>
