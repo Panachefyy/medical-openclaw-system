@@ -7,7 +7,8 @@
     activeMainTab: "dialog",
     assistantMessages: [...mock.aiAssistantHistory],
     isAiLoading: false,
-    aiError: ""
+    aiError: "",
+    aiPanelCollapsed: false
   };
 
   const els = {
@@ -15,6 +16,7 @@
     patientList: document.getElementById("patientList"),
     mainPanel: document.getElementById("mainPanel"),
     aiPanel: document.getElementById("aiPanel"),
+    workspace: document.querySelector(".workspace"),
     search: document.getElementById("globalSearch"),
     refresh: document.getElementById("refreshList")
   };
@@ -362,12 +364,17 @@
   }
 
   function renderAssistant(patient) {
-    els.aiPanel.className = `ai-panel ${patient.status === "active" ? "has-runtime" : ""}`;
+    els.workspace.classList.toggle("ai-collapsed", state.aiPanelCollapsed);
+    els.aiPanel.className = `ai-panel ${patient.status === "active" ? "has-runtime" : ""} ${state.aiPanelCollapsed ? "is-collapsed" : ""}`;
     els.aiPanel.innerHTML = `
+      <button class="ai-panel-handle" type="button" data-ai-panel-toggle aria-label="展开AI智能助手" title="展开AI智能助手">
+        <span>问AI</span>
+        <i>‹</i>
+      </button>
       <section class="panel ai-assistant">
         <div class="assistant-head">
           <h2>AI智能助手</h2>
-          <button type="button" aria-label="关闭">×</button>
+          <button type="button" data-ai-panel-toggle aria-label="收起AI智能助手" title="收起AI智能助手">×</button>
         </div>
         <div class="robot-avatar"></div>
         <div class="assistant-presets">
@@ -537,6 +544,13 @@
 
   function bindEvents() {
     document.addEventListener("click", (event) => {
+      const aiPanelToggle = event.target.closest("[data-ai-panel-toggle]");
+      if (aiPanelToggle) {
+        state.aiPanelCollapsed = !state.aiPanelCollapsed;
+        renderAssistant(selectedPatient());
+        return;
+      }
+
       const statusButton = event.target.closest("[data-status]");
       if (statusButton) {
         state.status = statusButton.dataset.status;

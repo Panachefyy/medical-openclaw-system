@@ -223,10 +223,15 @@ button {
 .workspace {
   height: calc(100vh - 56px);
   display: grid;
-  grid-template-columns: 260px minmax(760px, 1fr) 300px;
+  grid-template-columns: 260px minmax(760px, 1fr) minmax(32px, 300px);
   gap: 12px;
   padding: 12px;
   overflow: hidden;
+  transition: grid-template-columns 0.22s ease;
+}
+
+.workspace.ai-collapsed {
+  grid-template-columns: 260px minmax(760px, 1fr) 32px;
 }
 
 .patient-sidebar,
@@ -241,10 +246,18 @@ button {
 }
 
 .ai-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
   overflow: auto;
+  transition: width 0.22s ease, opacity 0.22s ease;
+}
+
+.ai-panel.is-collapsed {
+  width: 32px;
+  overflow: visible;
+  justify-self: end;
 }
 
 .panel {
@@ -1016,11 +1029,60 @@ td {
   flex-direction: column;
   padding: 14px;
   min-height: 0;
+  transition: opacity 0.18s ease, transform 0.22s ease;
+}
+
+.ai-panel.is-collapsed .ai-assistant,
+.ai-panel.is-collapsed .ai-runtime {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(18px);
+}
+
+.ai-panel.is-collapsed .ai-assistant {
+  display: none;
+}
+
+.ai-panel.is-collapsed .ai-runtime {
+  display: none;
 }
 
 .ai-panel:not(.has-runtime) .ai-assistant {
   flex: 1;
   min-height: 100%;
+}
+
+.ai-panel-handle {
+  display: none;
+}
+
+.ai-panel.is-collapsed .ai-panel-handle {
+  width: 32px;
+  height: 132px;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  gap: 6px;
+  padding: 10px 0;
+  border: 1px solid #86adff;
+  border-radius: 8px 0 0 8px;
+  background: linear-gradient(180deg, #f8fbff, #eaf2ff);
+  color: var(--blue);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-panel-handle span {
+  writing-mode: vertical-rl;
+  letter-spacing: 0;
+}
+
+.ai-panel-handle i {
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .assistant-head {
