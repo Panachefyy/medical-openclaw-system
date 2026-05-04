@@ -23,8 +23,9 @@
           <button class="icon-action" type="button" aria-label="消息通知">✉<em>12</em></button>
           <button class="icon-action" type="button" aria-label="设置">⚙</button>
           <button class="icon-action" type="button" aria-label="帮助">?</button>
-          <!-- 添加全屏切换按钮 -->
-          <button class="icon-action" type="button" id="fullscreenToggle" aria-label="全屏切换">⛶</button>
+          <button class="icon-action fullscreen-action" type="button" id="fullscreenToggle" aria-label="进入全屏" title="进入全屏" aria-pressed="false">
+            <span class="fullscreen-icon" aria-hidden="true"></span>
+          </button>
           <div class="doctor-profile">
             <img alt="医生头像" src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=96&q=80" />
             <strong>张医生</strong>
@@ -55,9 +56,15 @@
     <script src="./js/api.js"></script>
     <script src="./js/app.js"></script>
     <script>
-      // 全屏切换功能
       const fullscreenToggle = document.getElementById('fullscreenToggle');
       let isFullscreen = false;
+
+      function syncFullscreenButton() {
+        fullscreenToggle.classList.toggle('is-fullscreen', isFullscreen);
+        fullscreenToggle.setAttribute('aria-pressed', String(isFullscreen));
+        fullscreenToggle.setAttribute('aria-label', isFullscreen ? '退出全屏' : '进入全屏');
+        fullscreenToggle.setAttribute('title', isFullscreen ? '退出全屏' : '进入全屏');
+      }
 
       function toggleFullscreen() {
         if (!isFullscreen) {
@@ -70,8 +77,6 @@
           } else if (document.documentElement.msRequestFullscreen) { /* IE/Edge */
             document.documentElement.msRequestFullscreen();
           }
-          isFullscreen = true;
-          fullscreenToggle.textContent = '⛶'; // 改为退出全屏图标
         } else {
           if (document.exitFullscreen) {
             document.exitFullscreen();
@@ -82,12 +87,9 @@
           } else if (document.msExitFullscreen) { /* IE/Edge */
             document.msExitFullscreen();
           }
-          isFullscreen = false;
-          fullscreenToggle.textContent = '⛶'; // 恢复全屏图标
         }
       }
 
-      // 监听全屏状态变化
       document.addEventListener('fullscreenchange', handleFullscreenChange);
       document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.addEventListener('mozfullscreenchange', handleFullscreenChange);
@@ -98,14 +100,10 @@
                       !!document.webkitFullscreenElement ||
                       !!document.mozFullScreenElement ||
                       !!document.msFullscreenElement;
-
-        if (isFullscreen) {
-          fullscreenToggle.textContent = '⛶'; // 显示退出全屏图标
-        } else {
-          fullscreenToggle.textContent = '⛶'; // 显示进入全屏图标
-        }
+        syncFullscreenButton();
       }
 
+      syncFullscreenButton();
       fullscreenToggle.addEventListener('click', toggleFullscreen);
     </script>
   </body>

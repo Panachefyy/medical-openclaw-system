@@ -362,6 +362,7 @@
   }
 
   function renderAssistant(patient) {
+    els.aiPanel.className = `ai-panel ${patient.status === "active" ? "has-runtime" : ""}`;
     els.aiPanel.innerHTML = `
       <section class="panel ai-assistant">
         <div class="assistant-head">

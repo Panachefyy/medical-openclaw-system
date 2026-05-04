@@ -157,8 +157,55 @@ button {
   text-align: center;
 }
 
-#fullscreenToggle {
-  font-size: 18px;
+.fullscreen-action {
+  overflow: hidden;
+}
+
+.fullscreen-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  background:
+    linear-gradient(#fff, #fff) left top / 8px 2px no-repeat,
+    linear-gradient(#fff, #fff) left top / 2px 8px no-repeat,
+    linear-gradient(#fff, #fff) right top / 8px 2px no-repeat,
+    linear-gradient(#fff, #fff) right top / 2px 8px no-repeat,
+    linear-gradient(#fff, #fff) left bottom / 8px 2px no-repeat,
+    linear-gradient(#fff, #fff) left bottom / 2px 8px no-repeat,
+    linear-gradient(#fff, #fff) right bottom / 8px 2px no-repeat,
+    linear-gradient(#fff, #fff) right bottom / 2px 8px no-repeat;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.fullscreen-action:hover .fullscreen-icon {
+  transform: scale(1.08);
+}
+
+.fullscreen-action.is-fullscreen .fullscreen-icon {
+  position: relative;
+  background: none;
+  transform: scale(0.98);
+}
+
+.fullscreen-action.is-fullscreen .fullscreen-icon::before,
+.fullscreen-action.is-fullscreen .fullscreen-icon::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border: 2px solid #fff;
+  border-radius: 2px;
+}
+
+.fullscreen-action.is-fullscreen .fullscreen-icon::before {
+  top: 1px;
+  right: 1px;
+}
+
+.fullscreen-action.is-fullscreen .fullscreen-icon::after {
+  left: 1px;
+  bottom: 1px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .doctor-profile {
@@ -194,6 +241,9 @@ button {
 }
 
 .ai-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   overflow: auto;
 }
 
@@ -962,7 +1012,14 @@ td {
 }
 
 .ai-assistant {
+  display: flex;
+  flex-direction: column;
   padding: 14px;
+  min-height: 0;
+}
+
+.ai-panel:not(.has-runtime) .ai-assistant {
+  flex: 1;
   min-height: 100%;
 }
 
@@ -1016,7 +1073,8 @@ td {
 }
 
 .assistant-messages {
-  height: 430px;
+  flex: 1;
+  min-height: 260px;
   overflow: auto;
   padding: 12px 2px;
 }
@@ -1108,7 +1166,7 @@ td {
 }
 
 .ai-runtime {
-  margin-top: 10px;
+  flex: 0 0 auto;
   padding: 14px;
 }
 
