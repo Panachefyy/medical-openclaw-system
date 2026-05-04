@@ -277,6 +277,7 @@
 
   function renderAiSummary(patient) {
     const summary = patient.summary || fallbackSummary(patient);
+    const meds = medicationRows(patient);
     return `
       <section class="ai-summary panel">
         <div class="section-heading">
@@ -301,8 +302,13 @@
           </div>
           <div class="summary-block meds">
             <h4>用药情况</h4>
-            <p>正在使用 <b>${summary.medications.reduce((sum, item) => sum + item.count, 0)}</b> 种药物</p>
-            ${summary.medications.map((item) => `<span>${item.label}<b>${item.count}</b>种</span>`).join("")}
+            <div class="med-count"><strong>${meds.length}</strong><span>种在用药物</span></div>
+            <div class="med-name-list">
+              ${meds.slice(0, 4).map((med) => `<em>${med.name}</em>`).join("")}
+            </div>
+            <div class="med-group-list">
+              ${summary.medications.map((item) => `<span>${item.label}<b>${item.count}</b>种</span>`).join("")}
+            </div>
           </div>
           <div class="summary-block">
             <h4>治疗建议 <small>AI参考</small></h4>
