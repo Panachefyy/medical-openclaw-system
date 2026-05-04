@@ -64,8 +64,15 @@
     return "success";
   }
 
+  function currentStatusTabs() {
+    return mock.statusTabs.map((tab) => ({
+      ...tab,
+      count: Math.max(mock.patients.filter((patient) => patient.status === tab.key).length, tab.count)
+    }));
+  }
+
   function renderStatusTabs() {
-    els.statusTabs.innerHTML = mock.statusTabs
+    els.statusTabs.innerHTML = currentStatusTabs()
       .map(
         (tab) => `
           <button class="${state.status === tab.key ? "active" : ""}" type="button" data-status="${tab.key}">
@@ -97,6 +104,8 @@
   }
 
   function renderPatientHeader(patient, compact = false) {
+    const statusTitle = patient.status === "done" ? "已完成" : "等待就诊";
+    const statusDetail = patient.status === "done" ? `完成时间 ${patient.completedAt || patient.visitDate || "--"}` : `预计等待 ${patient.waitEstimate || "约15分钟"}`;
     return `
       <section class="patient-header panel ${compact ? "compact" : ""}">
         <div class="avatar-large"></div>
@@ -129,8 +138,8 @@
               </div>
               <div class="status-card">
                 <span>就诊状态</span>
-                <strong>等待就诊</strong>
-                <p>预计等待 ${patient.waitEstimate || "约15分钟"}</p>
+                <strong>${statusTitle}</strong>
+                <p>${statusDetail}</p>
               </div>`
         }
         ${compact ? "" : '<button class="link-button" type="button">查看完整病历 ›</button>'}
@@ -276,10 +285,18 @@
         <small>*AI建议仅供参考，请结合临床实际情况判断</small>
       </section>
       <footer class="action-bar">
-        <button type="button">快速开方</button>
-        <button type="button">问诊模板</button>
-        <button type="button">查看病历</button>
-        <button class="primary" type="button" id="startConsult">开始问诊</button>
+        ${
+          patient.status === "done"
+            ? `<button type="button">查看病历</button>
+               <button type="button">打印病历</button>
+               <button type="button">发送患者</button>
+               <button type="button">加入随访</button>
+               <button class="primary" type="button">预约复诊</button>`
+            : `<button type="button">快速开方</button>
+               <button type="button">问诊模板</button>
+               <button type="button">查看病历</button>
+               <button class="primary" type="button" id="startConsult">开始问诊</button>`
+        }
       </footer>
     `;
     requestAnimationFrame(renderLipidChart);
@@ -358,7 +375,7 @@
         <button type="button">处方开具</button>
         <button type="button">打印病历</button>
         <button type="button">发送患者</button>
-        <button class="primary" type="button">保存并结束问诊</button>
+        <button class="primary" type="button" id="finishConsult">保存并结束问诊</button>
       </footer>
     `;
   }
@@ -590,6 +607,18 @@
         state.status = "active";
         state.selectedPatientId = active.id;
         state.aiPanelCollapsed = true;
+        renderAll();
+        return;
+      }
+
+      const finishConsult = event.target.closest("#finishConsult");
+      if (finishConsult) {
+        const current = selectedPatient();
+        const done = mock.patients.find((patient) => patient.status === "done" && patient.visitNo === current.visitNo) || mock.patients.find((patient) => patient.id === "p013");
+        if (!done) return;
+        state.status = "done";
+        state.selectedPatientId = done.id;
+        state.aiPanelCollapsed = false;
         renderAll();
       }
     });

@@ -2,7 +2,7 @@ window.MedicalMock = {
   statusTabs: [
     { key: "waiting", label: "待诊", count: 8 },
     { key: "active", label: "接诊中", count: 2 },
-    { key: "done", label: "已完成", count: 15 }
+    { key: "done", label: "已完成", count: 16 }
   ],
   patients: [
     {
@@ -137,6 +137,42 @@ window.MedicalMock = {
       summary: null
     },
     { id: "p010", status: "active", name: "李四", sex: "女", age: 58, visitNo: "0000123457", medicalCard: "210********4418", phone: "139****2210", time: "09:45", tag: "糖尿病", allergy: "无", height: "162cm", weight: "63kg", bmi: "24.0", department: "内分泌科", doctor: "张医生", visitDate: "2024-05-20 09:45", consultStartedAt: "09:48:00" },
+    {
+      id: "p013",
+      status: "done",
+      name: "张三",
+      sex: "男",
+      age: 65,
+      visitNo: "0000123456",
+      medicalCard: "110********1234",
+      phone: "138****5678",
+      time: "09:30",
+      tag: "高血压",
+      allergy: "青霉素过敏",
+      height: "175cm",
+      weight: "78kg",
+      bmi: "25.5（超重）",
+      department: "心血管内科",
+      doctor: "张医生",
+      visitDate: "2024-05-20 09:30",
+      completedAt: "2024-05-20 09:42",
+      summary: {
+        overview: "本次因头晕伴心慌1周就诊，晨起血压偏高，既往高血压10年合并血脂异常，颈动脉斑块提示动脉粥样硬化风险需持续管理。",
+        features: ["头晕伴心慌1周", "晨起血压160/95mmHg", "高血压病史10年", "LDL-C仍未达高危目标", "青霉素过敏"],
+        important: [
+          { label: "过敏史", value: "青霉素过敏", level: "danger" },
+          { label: "本次结论", value: "血压控制不稳定，需复核家庭血压和服药依从性" },
+          { label: "心血管风险", value: "中高危，关注颈动脉斑块与LDL-C达标", level: "danger" },
+          { label: "处置去向", value: "调整生活方式，继续监测，复诊评估用药方案" }
+        ],
+        medications: [
+          { label: "降压药", count: 2 },
+          { label: "调脂药", count: 1 },
+          { label: "抗血小板", count: 1 }
+        ],
+        suggestions: ["记录晨起和睡前血压，2周后带记录复诊", "评估降压药服药时间与依从性", "LDL-C目标建议 <1.8 mmol/L，必要时强化调脂"]
+      }
+    },
     { id: "p011", status: "done", name: "钱一", sex: "男", age: 49, visitNo: "0000123464", time: "08:15", tag: "复诊", allergy: "无", department: "心血管内科", doctor: "张医生", visitDate: "2024-05-20 08:15" },
     { id: "p012", status: "done", name: "陈二", sex: "女", age: 62, visitNo: "0000123465", time: "08:30", tag: "高血脂", allergy: "无", department: "心血管内科", doctor: "张医生", visitDate: "2024-05-20 08:30" }
   ],
