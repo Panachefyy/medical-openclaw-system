@@ -149,6 +149,9 @@
         }
         if (parsed.done) break;
         const payload = parsed.data;
+        if (eventName === "error" || payload?.errorMessage || payload?.error) {
+          throw new Error(payload?.errorMessage || payload?.error || "OpenClaw调用失败");
+        }
         if (eventName === "skill_result" || payload?.result || payload?.structured) {
           finalResult = payload;
           onSkillResult?.(payload);

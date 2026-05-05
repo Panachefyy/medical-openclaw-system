@@ -1,6 +1,6 @@
 (function () {
   const defaults = {
-    apiBaseUrl: "",
+    apiBaseUrl: window.location.protocol === "file:" ? "" : window.location.origin,
     patientEndpoints: {
       todayVisits: "/api/visits/today",
       visitContext: "/api/visits/{visitId}/context"

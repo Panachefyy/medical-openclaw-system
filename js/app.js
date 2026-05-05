@@ -237,7 +237,9 @@
               (result) => `
                 <article>
                   <div><strong>${skillTitle(result.skill)}</strong>${result.confidence ? `<span>置信度 ${(result.confidence * 100).toFixed(0)}%</span>` : ""}</div>
+                  ${result.skillName ? `<small>${result.skillName}</small>` : ""}
                   <p>${result.displayText || result.recordDraft || "已返回结构化结果"}</p>
+                  ${renderSkillHighlights(result)}
                   ${result.warnings?.length ? `<em>${result.warnings.join("；")}</em>` : ""}
                 </article>
               `
@@ -246,6 +248,30 @@
         </div>
       </section>
     `;
+  }
+
+  function renderSkillHighlights(result) {
+    if (result.extraction) {
+      const items = [
+        result.extraction.chiefComplaint && `主诉：${result.extraction.chiefComplaint}`,
+        result.extraction.symptoms?.length ? `症状：${result.extraction.symptoms.slice(0, 4).join("、")}` : "",
+        result.extraction.diagnoses?.length ? `诊断：${result.extraction.diagnoses.slice(0, 3).join("、")}` : "",
+        result.extraction.actionItems?.length ? `建议：${result.extraction.actionItems.slice(0, 3).join("、")}` : ""
+      ].filter(Boolean);
+      return items.length ? `<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>` : "";
+    }
+    if (result.labInterpretation) {
+      const abnormal = result.labInterpretation.abnormalItems || [];
+      const recs = result.labInterpretation.recommendations || [];
+      return `
+        ${abnormal.length ? `<ul>${abnormal.slice(0, 3).map((item) => `<li>${item.item || item} ${item.value || ""}${item.unit || ""} ${item.interpretation || ""}</li>`).join("")}</ul>` : ""}
+        ${recs.length ? `<p class="skill-recs">建议：${recs.slice(0, 3).join("；")}</p>` : ""}
+      `;
+    }
+    if (result.medicationAdvice?.recommendations?.length) {
+      return `<ul>${result.medicationAdvice.recommendations.slice(0, 4).map((item) => `<li>${item}</li>`).join("")}</ul>`;
+    }
+    return "";
   }
 
   function renderContextNotice() {

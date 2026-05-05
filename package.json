@@ -1,0 +1,15 @@
+{
+  "name": "medical-openclaw-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "临床问诊助手医生工作台，包含 OpenClaw Gateway 代理接入。",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "check": "node --check server/index.js && node --check server/services/openclawGatewayClient.js && node --check server/routes/api.js && node --check js/app.js && node --check js/services/openclawService.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

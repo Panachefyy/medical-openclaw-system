@@ -481,16 +481,38 @@ button {
 }
 
 .skill-grid article span,
-.skill-grid article em {
+.skill-grid article em,
+.skill-grid article small {
   color: var(--muted);
   font-style: normal;
   font-size: 12px;
+}
+
+.skill-grid article small {
+  display: block;
+  margin-bottom: 8px;
 }
 
 .skill-grid article p {
   margin: 0;
   color: #465672;
   line-height: 1.55;
+}
+
+.skill-grid article ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #465672;
+  line-height: 1.55;
+}
+
+.skill-grid article li {
+  margin: 4px 0;
+}
+
+.skill-recs {
+  margin-top: 8px !important;
+  color: var(--blue) !important;
 }
 
 .section-heading {
