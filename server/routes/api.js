@@ -1,26 +1,6 @@
 import { buildMockContext, patients, statusTabs } from "../services/mockData.js";
 import { createOpenClawGatewayClient } from "../services/openclawGatewayClient.js";
-
-function sendJson(res, status, payload) {
-  const text = JSON.stringify(payload);
-  res.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Content-Length": Buffer.byteLength(text)
-  });
-  res.end(text);
-}
-
-function sendSse(res, event, data) {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
-}
-
-async function readJson(req) {
-  const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
-  const text = Buffer.concat(chunks).toString("utf8");
-  return text ? JSON.parse(text) : {};
-}
+import { readJson, sendJson, sendSse } from "../http/responses.js";
 
 function findPatient(visitId, patientId) {
   return patients.find((patient) => patient.visitNo === visitId || patient.id === patientId) || patients[0];

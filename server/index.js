@@ -1,69 +1,14 @@
-import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { serverConfig } from "./config.js";
+import { createStaticFileHandler } from "./http/staticFiles.js";
 import { handleApi } from "./routes/api.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const forceFrontendMock = process.env.MEDICAL_FRONTEND_MOCK === "true";
-
-const mimeTypes = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".svg": "image/svg+xml"
-};
-
-function safeJoin(root, requestPath) {
-  const normalized = path.normalize(decodeURIComponent(requestPath)).replace(/^(\.\.[/\\])+/, "");
-  const fullPath = path.join(root, normalized);
-  if (!fullPath.startsWith(root)) return null;
-  return fullPath;
-}
-
-function serveStatic(req, res, url) {
-  const requestPath = url.pathname === "/" ? "/index.html" : url.pathname;
-  const filePath = safeJoin(rootDir, requestPath);
-
-  if (!filePath || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end("Not found");
-    return;
-  }
-
-  const ext = path.extname(filePath);
-  if (forceFrontendMock && requestPath === "/index.html") {
-    const html = fs.readFileSync(filePath, "utf8");
-    const mockConfig = [
-      "<script>",
-      "window.MEDICAL_APP_CONFIG = {",
-      '  apiBaseUrl: "",',
-      "  openclaw: { stream: true }",
-      "};",
-      "window.OPENCLAW_CONFIG = { endpoint: \"\" };",
-      "</script>"
-    ].join("\n");
-    const body = html.replace("</head>", `${mockConfig}\n  </head>`);
-    res.writeHead(200, {
-      "Content-Type": mimeTypes[ext],
-      "Cache-Control": "no-cache"
-    });
-    res.end(body);
-    return;
-  }
-
-  res.writeHead(200, {
-    "Content-Type": mimeTypes[ext] || "application/octet-stream",
-    "Cache-Control": "no-cache"
-  });
-  fs.createReadStream(filePath).pipe(res);
-}
+const serveStatic = createStaticFileHandler({ rootDir, forceFrontendMock });
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "127.0.0.1"}`);

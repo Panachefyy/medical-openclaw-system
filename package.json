@@ -7,7 +7,7 @@
   "scripts": {
     "start": "PORT=3000 node server/index.js",
     "start:mock": "PORT=3500 MEDICAL_FRONTEND_MOCK=true node server/index.js",
-    "check": "node --check server/index.js && node --check server/services/openclawGatewayClient.js && node --check server/routes/api.js && node --check js/app.js && node --check js/viewModels/patientViewModel.js && node --check js/services/openclawService.js"
+    "check": "node --check server/index.js && node --check server/http/responses.js && node --check server/http/staticFiles.js && node --check server/services/openclawGatewayClient.js && node --check server/routes/api.js && node --check js/core/config.js && node --check js/core/http.js && node --check js/services/openclawClient.js && node --check js/presentation/app.js && node --check js/viewModels/patientViewModel.js && node --check js/services/openclawService.js"
   },
   "engines": {
     "node": ">=22"

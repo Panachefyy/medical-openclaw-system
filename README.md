@@ -6,16 +6,17 @@
 
 - `index.html`：页面入口。
 - `styles.css`：完整页面样式。
-- `js/mock.js`：患者、检查、检验、用药、AI 示例回复等模拟数据。
-- `js/config.js`：前端运行配置，包含业务 API 和 OpenClaw 代理接口地址。
-- `js/http.js`：统一请求封装，处理 JSON、超时和错误。
+- `js/data/mock.js`：患者、检查、检验、用药、AI 示例回复等模拟数据。
+- `js/core/config.js`：前端运行配置，包含业务 API 和 OpenClaw 代理接口地址。
+- `js/core/http.js`：统一请求封装，处理 JSON、超时和错误。
 - `js/state/store.js`：共享状态容器，保存患者上下文和 skill 结果。
 - `js/services/patientService.js`：读取今日患者列表和患者完整上下文，未配置后端时自动使用 mock。
 - `js/services/openclawService.js`：调用 OpenClaw skill/chat 代理接口，支持 SSE 流式输出。
+- `js/services/openclawClient.js`：兼容旧版 OpenClaw HTTP endpoint 的客户端封装。
 - `js/ai/contextBuilder.js`：把患者病历、检查、检验、用药和对话整理成 OpenClaw 输入上下文。
 - `js/ai/skillResultMapper.js`：把 OpenClaw skill 结果映射为页面可展示的结构。
-- `js/api.js`：AI API 客户端封装，预留 OpenClaw 对接。
-- `js/app.js`：页面渲染、状态切换、图表、AI 对话交互。
+- `js/viewModels/patientViewModel.js`：把患者上下文加工成页面展示模型。
+- `js/presentation/app.js`：页面渲染、状态切换、图表、AI 对话交互。
 
 ## 本地运行
 
@@ -109,7 +110,7 @@ npm start
 
 这些路径由 `server/` 内置代理实现，再由代理通过 WebSocket JSON-RPC 调用 OpenClaw Gateway。
 
-在 `index.html` 引入 `js/config.js` 前增加配置：
+在 `index.html` 引入 `js/core/config.js` 前增加配置：
 
 ```html
 <script>
@@ -131,7 +132,7 @@ npm start
 </script>
 ```
 
-未配置 `apiBaseUrl` 时，页面会自动使用 `js/mock.js` 的本地模拟数据和模拟 skill 流式结果。
+未配置 `apiBaseUrl` 时，页面会自动使用 `js/data/mock.js` 的本地模拟数据和模拟 skill 流式结果。
 
 ### 患者数据接口
 
@@ -280,9 +281,9 @@ event: done
 
 ## 兼容旧版 OpenClaw 配置
 
-当前 `js/api.js` 会读取 `window.OPENCLAW_CONFIG` 或 `localStorage.OPENCLAW_CONFIG`。未配置 `endpoint` 时使用 mock 流式回复。
+当前 `js/services/openclawClient.js` 会读取 `window.OPENCLAW_CONFIG` 或 `localStorage.OPENCLAW_CONFIG`。未配置 `endpoint` 时使用 mock 流式回复。
 
-在 `index.html` 引入 `js/api.js` 前增加配置即可：
+在 `index.html` 引入 `js/services/openclawClient.js` 前增加配置即可：
 
 ```html
 <script>
