@@ -11,27 +11,6 @@
     return "success";
   }
 
-  function countStatusTabs(baseTabs, patients) {
-    return (baseTabs || []).map((tab) => ({
-      ...tab,
-      count: (patients || []).filter((patient) => patient.status === tab.key).length
-    }));
-  }
-
-  function filterPatients(patients, { status, search }) {
-    const keyword = String(search || "").trim().toLowerCase();
-    return (patients || []).filter((patient) => {
-      const inStatus = patient.status === status;
-      if (!keyword) return inStatus;
-      return (
-        inStatus &&
-        [patient.name, patient.visitNo, patient.medicalCard, patient.phone].some((value) =>
-          String(value || "").toLowerCase().includes(keyword)
-        )
-      );
-    });
-  }
-
   function fallbackSummary(patient) {
     return {
       overview: `${patient.name}，${patient.age}岁，${patient.tag || "待评估"}患者，本次就诊资料已汇总，建议结合病史、检查检验和用药情况继续评估。`,
@@ -58,33 +37,8 @@
     return ctx.clinicalAdvice?.length ? ctx.clinicalAdvice : patient.summary?.suggestions || DEFAULT_ADVICE;
   }
 
-  function fallbackMedicationRows(patient, mock) {
-    const tag = patient.tag || "";
-    if (/糖尿病/.test(tag)) {
-      return [
-        { name: "二甲双胍缓释片", spec: "0.5g", usage: "每日2次 每次1片", purpose: "降糖" },
-        { name: "达格列净片", spec: "10mg", usage: "每日1次 每次1片", purpose: "降糖/心肾保护" },
-        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" }
-      ];
-    }
-    if (/冠心病/.test(tag)) {
-      return [
-        { name: "阿司匹林肠溶片", spec: "100mg", usage: "每日1次 每次1片", purpose: "抗血小板" },
-        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
-        { name: "美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次1片", purpose: "控制心率" }
-      ];
-    }
-    if (/高血脂/.test(tag)) {
-      return [
-        { name: "瑞舒伐他汀钙片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "调脂" },
-        { name: "辅酶Q10软胶囊", spec: "10mg", usage: "每日2次 每次1粒", purpose: "辅助治疗" }
-      ];
-    }
-    return mock.medications || [];
-  }
-
-  function medicationsView(ctx, patient, mock) {
-    return Array.isArray(ctx.medications) ? ctx.medications : fallbackMedicationRows(patient, mock);
+  function medicationsView(ctx, mock) {
+    return Array.isArray(ctx.medications) ? ctx.medications : mock.medications || [];
   }
 
   function medicationGroups(rows) {
@@ -103,7 +57,7 @@
   }
 
   function buildAiSummaryView({ patient, context, skillSummary, mock }) {
-    const medications = medicationsView(context, patient, mock);
+    const medications = medicationsView(context, mock);
     return {
       summary: skillSummary || patient.summary || fallbackSummary(patient),
       medications,
@@ -115,7 +69,7 @@
     return {
       history: historyView(context, patient, mock),
       advice: adviceView(context, patient),
-      medications: medicationsView(context, patient, mock),
+      medications: medicationsView(context, mock),
       imaging: context.imaging || [],
       ultrasound: context.ultrasound || [],
       labs: context.lis || []
@@ -124,8 +78,6 @@
 
   window.PatientViewModel = {
     tagClass,
-    countStatusTabs,
-    filterPatients,
     medicationGroups,
     buildAiSummaryView,
     buildWaitingView

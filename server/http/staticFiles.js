@@ -27,7 +27,6 @@ function frontendMockConfigScript() {
     '  apiBaseUrl: "",',
     "  openclaw: { stream: true }",
     "};",
-    "window.OPENCLAW_CONFIG = { endpoint: \"\" };",
     "</script>"
   ].join("\n");
 }

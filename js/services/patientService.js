@@ -1,10 +1,6 @@
 (function () {
   function countTabs(patients) {
-    const base = window.MedicalMock.statusTabs;
-    return base.map((tab) => ({
-      ...tab,
-      count: patients.filter((patient) => patient.status === tab.key).length || tab.count
-    }));
+    return window.PatientStats.countStatusTabs(window.MedicalMock.statusTabs, patients);
   }
 
   function normalizePatient(raw) {

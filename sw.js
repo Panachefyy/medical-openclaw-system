@@ -1,4 +1,4 @@
-const CACHE_NAME = "medical-openclaw-demo-v1";
+const CACHE_NAME = "medical-openclaw-demo-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,14 +6,14 @@ const APP_SHELL = [
   "./js/data/mock.js",
   "./js/core/config.js",
   "./js/core/http.js",
-  "./js/state/store.js",
+  "./js/domain/patientStats.js",
   "./js/services/patientService.js",
   "./js/viewModels/patientViewModel.js",
   "./js/ai/contextBuilder.js",
   "./js/ai/skillResultMapper.js",
   "./js/services/openclawService.js",
-  "./js/services/openclawClient.js",
   "./js/presentation/app.js",
+  "./js/presentation/shell.js",
   "./manifest.webmanifest",
   "./assets/app-icon.svg"
 ];

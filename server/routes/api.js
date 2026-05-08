@@ -6,6 +6,27 @@ function findPatient(visitId, patientId) {
   return patients.find((patient) => patient.visitNo === visitId || patient.id === patientId) || patients[0];
 }
 
+async function runOpenClawSkill(body, onToken) {
+  const client = createOpenClawGatewayClient();
+  return client.runSkill({
+    skill: body.skill,
+    action: body.action,
+    messages: body.messages || [],
+    patientContext: body.patientContext || {},
+    onToken
+  });
+}
+
+function startSse(res) {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no"
+  });
+  res.write("\n");
+}
+
 export async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
     sendJson(res, 200, { ok: true, service: "medical-openclaw-system" });
@@ -31,23 +52,10 @@ export async function handleApi(req, res, url) {
     const wantsStream = body.stream !== false;
 
     if (wantsStream) {
-      res.writeHead(200, {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no"
-      });
-      res.write("\n");
+      startSse(res);
 
       try {
-        const client = createOpenClawGatewayClient();
-        const result = await client.runSkill({
-          skill: body.skill,
-          action: body.action,
-          messages: body.messages || [],
-          patientContext: body.patientContext || {},
-          onToken: (token) => sendSse(res, "token", { content: token })
-        });
+        const result = await runOpenClawSkill(body, (token) => sendSse(res, "token", { content: token }));
         sendSse(res, "skill_result", result);
         sendSse(res, "done", {});
         res.end();
@@ -62,13 +70,7 @@ export async function handleApi(req, res, url) {
     }
 
     try {
-      const client = createOpenClawGatewayClient();
-      const result = await client.runSkill({
-        skill: body.skill,
-        action: body.action,
-        messages: body.messages || [],
-        patientContext: body.patientContext || {}
-      });
+      const result = await runOpenClawSkill(body);
       sendJson(res, 200, result);
     } catch (error) {
       sendJson(res, 502, {

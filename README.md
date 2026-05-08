@@ -9,14 +9,14 @@
 - `js/data/mock.js`：患者、检查、检验、用药、AI 示例回复等模拟数据。
 - `js/core/config.js`：前端运行配置，包含业务 API 和 OpenClaw 代理接口地址。
 - `js/core/http.js`：统一请求封装，处理 JSON、超时和错误。
-- `js/state/store.js`：共享状态容器，保存患者上下文和 skill 结果。
+- `js/domain/patientStats.js`：患者状态统计和列表筛选等纯业务工具。
 - `js/services/patientService.js`：读取今日患者列表和患者完整上下文，未配置后端时自动使用 mock。
 - `js/services/openclawService.js`：调用 OpenClaw skill/chat 代理接口，支持 SSE 流式输出。
-- `js/services/openclawClient.js`：兼容旧版 OpenClaw HTTP endpoint 的客户端封装。
 - `js/ai/contextBuilder.js`：把患者病历、检查、检验、用药和对话整理成 OpenClaw 输入上下文。
 - `js/ai/skillResultMapper.js`：把 OpenClaw skill 结果映射为页面可展示的结构。
 - `js/viewModels/patientViewModel.js`：把患者上下文加工成页面展示模型。
 - `js/presentation/app.js`：页面渲染、状态切换、图表、AI 对话交互。
+- `js/presentation/shell.js`：页面外壳行为，如全屏按钮和 service worker 注册。
 
 ## 本地运行
 
@@ -236,11 +236,11 @@ POST /api/openclaw/chat
 
 ```json
 {
-  "displayText": "患者高血压病史10年，近期血压控制不稳定...",
+  "displayText": "患者慢阻肺病史多年，近期咳嗽咳痰及活动后气喘加重...",
   "result": {
-    "summary": "高血压病史10年...",
-    "keyFindings": ["LDL-C偏高"],
-    "recommendations": ["评估降压方案"]
+    "summary": "慢阻肺急性加重风险待评估...",
+    "keyFindings": ["咳嗽咳痰加重", "活动后气喘"],
+    "recommendations": ["评估血氧、炎症指标和胸部影像"]
   },
   "confidence": 0.86,
   "warnings": ["AI结果需结合医生临床判断"]
@@ -279,29 +279,5 @@ event: done
 
 如果 OpenClaw final 内容中包含 ```json fenced block，代理会解析 JSON 并作为结构化结果返回；否则会把最终文本包装成基础结构化结果。
 
-## 兼容旧版 OpenClaw 配置
-
-当前 `js/services/openclawClient.js` 会读取 `window.OPENCLAW_CONFIG` 或 `localStorage.OPENCLAW_CONFIG`。未配置 `endpoint` 时使用 mock 流式回复。
-
-在 `index.html` 引入 `js/services/openclawClient.js` 前增加配置即可：
-
-```html
-<script>
-  window.OPENCLAW_CONFIG = {
-    endpoint: "https://your-openclaw-host/v1/chat/completions",
-    stream: true,
-    headers: {
-      Authorization: "Bearer YOUR_TOKEN"
-    }
-  };
-</script>
-```
-
-前端发送的数据结构包含：
-
-- `messages`：对话历史。
-- `patientContext`：当前患者、病史、检查、检验、用药等上下文。
-- `action`：`summary`、`labs`、`medication`、`record` 或 `chat`。
-- `stream`：是否启用流式输出。
 
 流式接口支持 SSE 的 `data: ...` 行，也支持普通文本 chunk。后端返回 JSON 时可使用 `content`、`text` 或 `message` 字段。

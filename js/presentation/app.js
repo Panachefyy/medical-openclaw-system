@@ -53,7 +53,7 @@
   }
 
   function filteredPatients() {
-    return viewModel.filterPatients(state.patients, { status: state.status, search: state.search });
+    return window.PatientStats.filterPatients(state.patients, { status: state.status, search: state.search });
   }
 
   function tagClass(text) {
@@ -61,7 +61,7 @@
   }
 
   function currentStatusTabs() {
-    return viewModel.countStatusTabs(mock.statusTabs, state.patients);
+    return window.PatientStats.countStatusTabs(mock.statusTabs, state.patients);
   }
 
   function renderMedicationTable(rows) {
@@ -138,7 +138,6 @@
             <span>${patient.sex}</span>
             <span>${patient.age}岁</span>
             <em class="risk-tag">${patient.tag}</em>
-            ${patient.tag === "高血压" ? '<em class="risk-tag">高血脂</em>' : ""}
           </div>
           <div class="info-grid">
             <span><b>医保卡号</b>${patient.medicalCard || "--"}</span>
@@ -729,7 +728,6 @@
         onSkillResult: (payload) => {
           const mapped = window.SkillResultMapper.normalize(skill, payload);
           state.skillResults = { ...state.skillResults, [skill]: mapped };
-          window.AppStore.setSkillResult(skill, mapped);
           renderAll();
         }
       });
