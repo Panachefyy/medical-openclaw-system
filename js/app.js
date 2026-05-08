@@ -15,14 +15,18 @@
     contextError: "",
     assistantMessages: [...mock.aiAssistantHistory],
     isAiLoading: false,
-    aiError: ""
+    aiError: "",
+    aiPanelCollapsed: false
   };
+  let lipidChart = null;
+  let layoutRefreshTimer = null;
 
   const els = {
     statusTabs: document.getElementById("statusTabs"),
     patientList: document.getElementById("patientList"),
     mainPanel: document.getElementById("mainPanel"),
     aiPanel: document.getElementById("aiPanel"),
+    workspace: document.querySelector(".workspace"),
     search: document.getElementById("globalSearch"),
     refresh: document.getElementById("refreshList")
   };
@@ -67,8 +71,120 @@
     return "success";
   }
 
+  function currentStatusTabs() {
+    return mock.statusTabs.map((tab) => ({
+      ...tab,
+      count: mock.patients.filter((patient) => patient.status === tab.key).length
+    }));
+  }
+
+  function fallbackSummary(patient) {
+    return {
+      overview: `${patient.name}，${patient.age}岁，${patient.tag || "待评估"}患者，本次就诊资料已汇总，建议结合病史、检查检验和用药情况继续评估。`,
+      features: [patient.tag || "待评估", patient.department || "门诊", patient.allergy && patient.allergy !== "无" ? `${patient.allergy}` : "无明确过敏史"],
+      important: [
+        { label: "过敏史", value: patient.allergy || "无", level: patient.allergy && patient.allergy !== "无" ? "danger" : "" },
+        { label: "本次就诊", value: patient.visitDate || "--" }
+      ],
+      medications: [{ label: "当前用药", count: 0 }],
+      suggestions: ["补充完整病史和检查资料", "结合临床实际评估诊疗方案"]
+    };
+  }
+
+  function patientProfile(patient) {
+    const tag = patient.tag || "";
+    if (/糖尿病/.test(tag)) {
+      return {
+        historyTitle: "糖尿病病史",
+        historyMeta: "代谢管理",
+        historyRows: [
+          ["首次诊断", "2018-06-20"],
+          ["近期血糖", "空腹 7.8-9.2 mmol/L"],
+          ["相关症状", "偶有乏力，无明显多饮多尿"],
+          ["并发症筛查", "建议复查尿微量白蛋白、眼底"],
+          ["生活方式", "主食控制一般，餐后运动不足"]
+        ],
+        advice: ["复查 HbA1c，评估近3个月血糖控制", "加强餐后血糖监测和饮食记录", "结合肾功能和低血糖风险调整降糖方案"]
+      };
+    }
+    if (/冠心病/.test(tag)) {
+      return {
+        historyTitle: "冠心病病史",
+        historyMeta: "PCI术后随访",
+        historyRows: [
+          ["既往病史", "冠心病，PCI术后"],
+          ["近期症状", "活动后胸闷 3 天"],
+          ["风险因素", "高龄，血脂异常，高血压病史"],
+          ["当前重点", "排查心肌缺血和心律失常"],
+          ["随访建议", "复核心电图、肌钙蛋白和用药依从性"]
+        ],
+        advice: ["优先排查心肌缺血相关风险", "完善心电图及心肌损伤标志物", "复核抗血小板和调脂治疗方案"]
+      };
+    }
+    if (/高血脂/.test(tag)) {
+      return {
+        historyTitle: "高血脂病史",
+        historyMeta: "血脂管理",
+        historyRows: [
+          ["首次发现", "2022-08-18"],
+          ["近期血脂", "LDL-C仍需持续达标管理"],
+          ["相关风险", "需结合ASCVD风险分层"],
+          ["生活方式", "油脂摄入需控制，运动频率不足"],
+          ["随访计划", "8-12周复查血脂和肝功能"]
+        ],
+        advice: ["继续规律调脂治疗", "复查血脂四项和肝功能", "强化饮食控制和运动管理"]
+      };
+    }
+    if (/复诊/.test(tag)) {
+      return {
+        historyTitle: "复诊记录",
+        historyMeta: "长期随访",
+        historyRows: [
+          ["本次类型", "慢病复诊"],
+          ["病情变化", "近期无急性不适"],
+          ["用药情况", "自述规律服药"],
+          ["检查结果", "暂无明显异常报警项"],
+          ["随访计划", "按慢病管理周期复查"]
+        ],
+        advice: ["维持规律随访", "继续记录家庭监测数据", "按计划复查相关指标"]
+      };
+    }
+    return {
+      historyTitle: "高血压病史",
+      historyMeta: "病程 10年",
+      historyRows: mock.hypertensionHistory,
+      advice: ["继续监测血压，注意低盐饮食和规律运动", "评估调脂治疗依从性，关注LDL-C达标", "颈动脉斑块稳定，建议定期复查超声"]
+    };
+  }
+
+  function medicationRows(patient) {
+    const tag = patient.tag || "";
+    if (/糖尿病/.test(tag)) {
+      return [
+        { name: "二甲双胍缓释片", spec: "0.5g", usage: "每日2次 每次1片", purpose: "降糖" },
+        { name: "达格列净片", spec: "10mg", usage: "每日1次 每次1片", purpose: "降糖/心肾保护" },
+        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" }
+      ];
+    }
+    if (/冠心病/.test(tag)) {
+      return [
+        { name: "阿司匹林肠溶片", spec: "100mg", usage: "每日1次 每次1片", purpose: "抗血小板" },
+        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+        { name: "美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次1片", purpose: "控制心率" }
+      ];
+    }
+    if (/高血脂/.test(tag)) {
+      return [
+        { name: "瑞舒伐他汀钙片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+        { name: "辅酶Q10软胶囊", spec: "10mg", usage: "每日2次 每次1粒", purpose: "辅助治疗" }
+      ];
+    }
+    return mock.medications;
+  }
+
   function renderStatusTabs() {
-    els.statusTabs.innerHTML = state.statusTabs
+    const tabs = state.statusTabs?.length ? state.statusTabs : currentStatusTabs();
+    els.statusTabs.innerHTML = tabs
       .map(
         (tab) => `
           <button class="${state.status === tab.key ? "active" : ""}" type="button" data-status="${tab.key}">
@@ -112,6 +228,13 @@
   }
 
   function renderPatientHeader(patient, compact = false) {
+    const statusTitle = patient.status === "done" ? "已完成" : patient.status === "active" ? "接诊中" : "等待就诊";
+    const statusDetail =
+      patient.status === "done"
+        ? `完成时间 ${patient.completedAt || patient.visitDate || "--"}`
+        : patient.status === "active"
+          ? `开始时间 ${patient.consultStartedAt || "--"}`
+          : `预计等待 ${patient.waitEstimate || "约15分钟"}`;
     return `
       <section class="patient-header panel ${compact ? "compact" : ""}">
         <div class="avatar-large"></div>
@@ -135,7 +258,7 @@
         </div>
         ${
           compact
-            ? `<div class="consult-timer"><span></span>问诊时中 <strong id="timerText">00:06:35</strong><div class="voice-wave">${"<i></i>".repeat(32)}</div></div>`
+            ? `<div class="consult-timer"><span></span>问诊中 <strong id="timerText">00:06:35</strong><div class="voice-wave">${"<i></i>".repeat(32)}</div></div>`
             : `<div class="visit-card">
                 <h3>本次就诊</h3>
                 <p><span>就诊科室</span>${patient.department}</p>
@@ -144,8 +267,8 @@
               </div>
               <div class="status-card">
                 <span>就诊状态</span>
-                <strong>等待就诊</strong>
-                <p>预计等待 ${patient.waitEstimate || "约15分钟"}</p>
+                <strong>${statusTitle}</strong>
+                <p>${statusDetail}</p>
               </div>`
         }
         ${compact ? "" : '<button class="link-button" type="button">查看完整病历 ›</button>'}
@@ -174,7 +297,8 @@
 
   function renderAiSummary(patient) {
     const skillSummary = state.skillResults.patient_summary?.summaryCard;
-    const summary = skillSummary || patient.summary || mock.patients[0].summary;
+    const meds = medicationRows(patient);
+    const summary = skillSummary || patient.summary || fallbackSummary(patient);
     return `
       <section class="ai-summary panel">
         <div class="section-heading">
@@ -199,8 +323,13 @@
           </div>
           <div class="summary-block meds">
             <h4>用药情况</h4>
-            <p>正在使用 <b>${summary.medications.reduce((sum, item) => sum + item.count, 0)}</b> 种药物</p>
-            ${summary.medications.map((item) => `<span>${item.label}<b>${item.count}</b>种</span>`).join("")}
+            <div class="med-count"><strong>${meds.length}</strong><span>种在用药物</span></div>
+            <div class="med-name-list">
+              ${meds.slice(0, 4).map((med) => `<em>${med.name}</em>`).join("")}
+            </div>
+            <div class="med-group-list">
+              ${summary.medications.map((item) => `<span>${item.label}<b>${item.count}</b>种</span>`).join("")}
+            </div>
           </div>
           <div class="summary-block">
             <h4>治疗建议 <small>AI参考</small></h4>
@@ -327,15 +456,17 @@
 
   function renderWaiting(patient) {
     const ctx = clinicalContext();
+    const profile = patientProfile(patient);
+    const meds = ctx.medications?.length ? ctx.medications : medicationRows(patient);
     els.mainPanel.innerHTML = `
       ${renderPatientHeader(patient)}
       ${renderContextNotice()}
       ${renderAiSummary(patient)}
       ${renderSkillResultPanel()}
-      <section class="dashboard-grid">
-        <article class="panel history-card">
-          <div class="section-heading"><h3>高血压病史 <small>病程 10年</small></h3></div>
-          <div class="history-list">${infoList(ctx.hypertensionHistory)}</div>
+        <section class="dashboard-grid">
+          <article class="panel history-card">
+          <div class="section-heading"><h3>${profile.historyTitle} <small>${profile.historyMeta}</small></h3></div>
+          <div class="history-list">${infoList(ctx.hypertensionHistory?.length ? ctx.hypertensionHistory : profile.historyRows)}</div>
           <button class="text-link" type="button">展开更多⌄</button>
         </article>
         <article class="panel exam-card">
@@ -363,7 +494,7 @@
         </article>
         <article class="panel table-card">
           <div class="section-heading"><h3>当前用药 <small>患者自述/处方记录</small></h3><span>更新于 2024-05-18</span></div>
-          ${renderTable(ctx.medications, [
+          ${renderTable(meds, [
             { key: "name", label: "药品名称" },
             { key: "spec", label: "规格" },
             { key: "usage", label: "用法用量" },
@@ -374,17 +505,23 @@
       <section class="panel ai-advice">
         <h3>问诊助手AI建议 <small>基于病史及检查结果</small></h3>
         <ol>
-          <li>血压控制总体尚可，建议继续监测血压，注意低盐饮食和规律运动。</li>
-          <li>血脂LDL-C较前略高，建议评估调脂治疗方案依从性，可考虑强化调脂治疗。</li>
-          <li>颈动脉斑块稳定，建议继续抗血小板治疗，定期复查超声。</li>
+          ${profile.advice.map((item) => `<li>${item}</li>`).join("")}
         </ol>
         <small>*AI建议仅供参考，请结合临床实际情况判断</small>
       </section>
       <footer class="action-bar">
-        <button type="button">快速开方</button>
-        <button type="button">问诊模板</button>
-        <button type="button">查看病历</button>
-        <button class="primary" type="button" id="startConsult">开始问诊</button>
+        ${
+          patient.status === "done"
+            ? `<button type="button">查看病历</button>
+               <button type="button">打印病历</button>
+               <button type="button">发送患者</button>
+               <button type="button">加入随访</button>
+               <button class="primary" type="button">预约复诊</button>`
+            : `<button type="button">快速开方</button>
+               <button type="button">问诊模板</button>
+               <button type="button">查看病历</button>
+               <button class="primary" type="button" id="startConsult">开始问诊</button>`
+        }
       </footer>
     `;
     requestAnimationFrame(renderLipidChart);
@@ -409,8 +546,8 @@
       </nav>
       <section class="consult-layout">
         <article class="panel dialog-panel">
-          <div class="section-heading">
-            <h3>医患对话 <small>语音识别实时进行中...</small></h3>
+          <div class="section-heading live-heading">
+            <h3>医患对话 <small><span class="live-dot"></span>语音识别实时进行中...</small></h3>
             <label class="switch">显示时间戳<input type="checkbox" checked /><span></span></label>
           </div>
           <div class="dialog-list">
@@ -430,7 +567,7 @@
           </div>
           <div class="voice-input">
             <input type="text" placeholder="输入文字或按住说话（语音也将被识别）..." />
-            <button type="button">🎙</button>
+            <button class="recording-btn" type="button">🎙</button>
             <button type="button">➤</button>
           </div>
           <div class="quick-row">
@@ -440,8 +577,8 @@
           </div>
         </article>
         <article class="consult-side">
-          <section class="panel extracted-card">
-            <div class="section-heading"><h3>实时提取信息 <small>AI分析中...</small></h3></div>
+          <section class="panel extracted-card live-panel">
+            <div class="section-heading live-heading"><h3>实时提取信息 <small><span class="live-dot"></span>AI分析中...</small></h3></div>
             <div class="extract-block"><h4>主诉</h4><p>${extraction?.chiefComplaint || "头晕 1周，晨起明显，伴心慌"}</p></div>
             <div class="extract-block"><h4>现病史</h4><p>${extraction?.presentIllness || "头晕 1周，晨起明显；心慌偶发；乏力，活动后气促"}</p></div>
             <div class="extract-block"><h4>生命体征（患者自述）</h4><p>${extraction?.vitals?.bloodPressure || "血压：160/95 mmHg（晨起）；145/88 mmHg（服药后）"}</p></div>
@@ -467,7 +604,7 @@
         <button type="button">处方开具</button>
         <button type="button">打印病历</button>
         <button type="button">发送患者</button>
-        <button class="primary" type="button">保存并结束问诊</button>
+        <button class="primary" type="button" id="finishConsult">保存并结束问诊</button>
       </footer>
     `;
   }
@@ -475,11 +612,19 @@
   function renderAssistant(patient) {
     const diagnosis = state.skillResults.diagnosis_suggestion?.diagnosis;
     const extraction = state.skillResults.consultation_extraction?.extraction;
+    const hasRuntime = patient.status === "active";
+    els.workspace.classList.toggle("ai-collapsed", state.aiPanelCollapsed);
+    els.workspace.classList.toggle("ai-runtime-visible", hasRuntime);
+    els.aiPanel.className = `ai-panel ${hasRuntime ? "has-runtime" : ""} ${state.aiPanelCollapsed ? "is-collapsed" : ""}`;
     els.aiPanel.innerHTML = `
+      <button class="ai-panel-handle" type="button" data-ai-panel-toggle aria-label="展开AI智能助手" title="展开AI智能助手">
+        <span>问AI</span>
+        <i>‹</i>
+      </button>
       <section class="panel ai-assistant">
         <div class="assistant-head">
           <h2>AI智能助手</h2>
-          <button type="button" aria-label="关闭">×</button>
+          <button type="button" data-ai-panel-toggle aria-label="收起AI智能助手" title="收起AI智能助手">×</button>
         </div>
         <div class="robot-avatar"></div>
         <div class="assistant-presets">
@@ -512,8 +657,8 @@
       </section>
       ${
         patient.status === "active"
-          ? `<section class="panel ai-runtime">
-              <h3>分析进度</h3>
+          ? `<section class="panel ai-runtime live-panel">
+              <h3><span class="live-dot"></span>分析进度</h3>
               <p><span class="dot done"></span>语音识别</p>
               <p><span class="dot done"></span>信息提取</p>
               <p><span class="dot active"></span>病情分析</p>
@@ -553,6 +698,28 @@
     renderPatientList();
     renderMain();
     renderAssistant(selectedPatient());
+  }
+
+  function refreshMainLayout() {
+    if (layoutRefreshTimer) window.clearTimeout(layoutRefreshTimer);
+    els.mainPanel.classList.add("layout-refreshing");
+    layoutRefreshTimer = window.setTimeout(() => {
+      els.mainPanel.classList.remove("layout-refreshing");
+    }, 260);
+
+    requestAnimationFrame(() => {
+      if (lipidChart) lipidChart.resize();
+      if (!window.echarts) {
+        const container = document.getElementById("lipidChart");
+        if (container?.querySelector("canvas")) fallbackChart(container);
+      }
+    });
+  }
+
+  function refreshMainLayoutAfterTransition() {
+    [80, 260, 420].forEach((delay) => {
+      window.setTimeout(refreshMainLayout, delay);
+    });
   }
 
   function fallbackChart(container) {
@@ -596,15 +763,17 @@
     if (!container) return;
     const lipids = clinicalContext().lipids;
     if (!window.echarts) {
+      lipidChart = null;
       fallbackChart(container);
       return;
     }
-    const chart = echarts.init(container);
-    chart.setOption({
+    if (lipidChart) lipidChart.dispose();
+    lipidChart = echarts.init(container);
+    lipidChart.setOption({
       color: ["#2f6bff", "#18a058", "#7757f6", "#f28c28"],
       tooltip: { trigger: "axis", backgroundColor: "#ffffff", borderColor: "#d8e3f4", textStyle: { color: "#1f2a44" } },
-      legend: { bottom: 0, itemWidth: 10, itemHeight: 6, textStyle: { color: "#5d6b82", fontSize: 11 } },
-      grid: { left: 36, right: 20, top: 24, bottom: 42 },
+      legend: { bottom: 10, itemWidth: 10, itemHeight: 6, textStyle: { color: "#5d6b82", fontSize: 11 } },
+      grid: { left: 36, right: 20, top: 24, bottom: 110 },
       xAxis: { type: "category", boundaryGap: false, data: lipids.dates, axisLine: { lineStyle: { color: "#d9e2ef" } }, axisLabel: { color: "#6b7890", fontSize: 11 } },
       yAxis: { type: "value", min: 0, max: 6, splitLine: { lineStyle: { color: "#ecf1f8" } }, axisLabel: { color: "#6b7890", fontSize: 11 } },
       series: [
@@ -614,7 +783,6 @@
         { name: "HDL-C（高密度脂蛋白）", type: "line", smooth: true, symbolSize: 5, data: lipids.hdl }
       ]
     });
-    window.addEventListener("resize", () => chart.resize(), { passive: true });
   }
 
   async function sendAiPrompt(prompt, action = "chat") {
@@ -707,6 +875,14 @@
 
   function bindEvents() {
     document.addEventListener("click", (event) => {
+      const aiPanelToggle = event.target.closest("[data-ai-panel-toggle]");
+      if (aiPanelToggle) {
+        state.aiPanelCollapsed = !state.aiPanelCollapsed;
+        renderAssistant(selectedPatient());
+        refreshMainLayoutAfterTransition();
+        return;
+      }
+
       const statusButton = event.target.closest("[data-status]");
       if (statusButton) {
         state.status = statusButton.dataset.status;
@@ -744,6 +920,17 @@
         state.status = "active";
         state.selectedPatientId = active.id;
         loadPatientContext(active);
+        return;
+      }
+
+      const finishConsult = event.target.closest("#finishConsult");
+      if (finishConsult) {
+        const current = selectedPatient();
+        const done = state.patients.find((patient) => patient.status === "done" && patient.visitNo === current.visitNo) || state.patients.find((patient) => patient.status === "done");
+        if (!done) return;
+        state.status = "done";
+        state.selectedPatientId = done.id;
+        loadPatientContext(done);
       }
     });
 
@@ -769,6 +956,7 @@
   }
 
   bindEvents();
+  window.addEventListener("resize", refreshMainLayoutAfterTransition, { passive: true });
   renderAll();
   loadTodayPatients();
 })();

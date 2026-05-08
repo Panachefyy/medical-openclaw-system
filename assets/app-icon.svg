@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="临床问诊助手">
+  <rect width="512" height="512" rx="112" fill="#0052cc"/>
+  <path d="M128 154c0-22 18-40 40-40h176c22 0 40 18 40 40v204c0 22-18 40-40 40H168c-22 0-40-18-40-40V154z" fill="#f8fbff"/>
+  <path d="M256 156v112M200 212h112" stroke="#0052cc" stroke-width="34" stroke-linecap="round"/>
+  <path d="M180 318h152M180 356h112" stroke="#73a7ff" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="358" cy="150" r="42" fill="#18a058"/>
+  <path d="M341 151l13 13 24-28" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

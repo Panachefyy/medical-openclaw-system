@@ -43,6 +43,46 @@ npm start
 http://127.0.0.1:3000/
 ```
 
+开发时如果希望保存文件后浏览器自动刷新，可以使用内置热加载服务：
+
+```bash
+python3 dev-server.py --port 4174
+```
+
+访问：
+
+```text
+http://127.0.0.1:4174/
+```
+
+热加载模式会临时禁用 service worker，避免 PWA 缓存影响开发预览。
+
+## Chrome 安装版（PWA）
+
+项目支持通过 Chrome 安装为本地应用。先启动本地静态服务：
+
+```bash
+python3 -m http.server 4174 --bind 127.0.0.1
+```
+
+然后用 Chrome 访问：
+
+```text
+http://127.0.0.1:4174/
+```
+
+在地址栏右侧点击“安装”图标，或进入 Chrome 菜单：
+
+```text
+保存和分享 -> 安装页面为应用
+```
+
+安装后会以独立窗口运行，并使用 `manifest.webmanifest` 和 `sw.js` 缓存本地静态资源。
+
+## 接入业务后端和 OpenClaw
+
+推荐让浏览器只访问你的业务后端，由后端读取 HIS/LIS/PACS 数据并代理 OpenClaw，避免在前端暴露密钥和敏感数据。
+
 代理服务会读取：
 
 ```text
@@ -68,10 +108,6 @@ npm start
 ```
 
 这些路径由 `server/` 内置代理实现，再由代理通过 WebSocket JSON-RPC 调用 OpenClaw Gateway。
-
-## 接入业务后端和 OpenClaw
-
-推荐让浏览器只访问你的业务后端，由后端读取 HIS/LIS/PACS 数据并代理 OpenClaw，避免在前端暴露密钥和敏感数据。
 
 在 `index.html` 引入 `js/config.js` 前增加配置：
 

@@ -2,7 +2,7 @@ window.MedicalMock = {
   statusTabs: [
     { key: "waiting", label: "待诊", count: 8 },
     { key: "active", label: "接诊中", count: 2 },
-    { key: "done", label: "已完成", count: 15 }
+    { key: "done", label: "已完成", count: 3 }
   ],
   patients: [
     {
@@ -137,6 +137,42 @@ window.MedicalMock = {
       summary: null
     },
     { id: "p010", status: "active", name: "李四", sex: "女", age: 58, visitNo: "0000123457", medicalCard: "210********4418", phone: "139****2210", time: "09:45", tag: "糖尿病", allergy: "无", height: "162cm", weight: "63kg", bmi: "24.0", department: "内分泌科", doctor: "张医生", visitDate: "2024-05-20 09:45", consultStartedAt: "09:48:00" },
+    {
+      id: "p013",
+      status: "done",
+      name: "张三",
+      sex: "男",
+      age: 65,
+      visitNo: "0000123456",
+      medicalCard: "110********1234",
+      phone: "138****5678",
+      time: "09:30",
+      tag: "高血压",
+      allergy: "青霉素过敏",
+      height: "175cm",
+      weight: "78kg",
+      bmi: "25.5（超重）",
+      department: "心血管内科",
+      doctor: "张医生",
+      visitDate: "2024-05-20 09:30",
+      completedAt: "2024-05-20 09:42",
+      summary: {
+        overview: "本次因头晕伴心慌1周就诊，晨起血压偏高，既往高血压10年合并血脂异常，颈动脉斑块提示动脉粥样硬化风险需持续管理。",
+        features: ["头晕伴心慌1周", "晨起血压160/95mmHg", "高血压病史10年", "LDL-C仍未达高危目标", "青霉素过敏"],
+        important: [
+          { label: "过敏史", value: "青霉素过敏", level: "danger" },
+          { label: "本次结论", value: "血压控制不稳定，需复核家庭血压和服药依从性" },
+          { label: "心血管风险", value: "中高危，关注颈动脉斑块与LDL-C达标", level: "danger" },
+          { label: "处置去向", value: "调整生活方式，继续监测，复诊评估用药方案" }
+        ],
+        medications: [
+          { label: "降压药", count: 2 },
+          { label: "调脂药", count: 1 },
+          { label: "抗血小板", count: 1 }
+        ],
+        suggestions: ["记录晨起和睡前血压，2周后带记录复诊", "评估降压药服药时间与依从性", "LDL-C目标建议 <1.8 mmol/L，必要时强化调脂"]
+      }
+    },
     { id: "p011", status: "done", name: "钱一", sex: "男", age: 49, visitNo: "0000123464", time: "08:15", tag: "复诊", allergy: "无", department: "心血管内科", doctor: "张医生", visitDate: "2024-05-20 08:15" },
     { id: "p012", status: "done", name: "陈二", sex: "女", age: 62, visitNo: "0000123465", time: "08:30", tag: "高血脂", allergy: "无", department: "心血管内科", doctor: "张医生", visitDate: "2024-05-20 08:30" }
   ],
@@ -209,3 +245,117 @@ window.MedicalMock = {
     record: "主诉：头晕伴心慌1周。现病史：患者近1周晨起头晕明显，偶有心慌，家庭自测血压最高160/95mmHg，服药后145/88mmHg，伴乏力及活动后气促，否认明显胸痛及下肢水肿。"
   }
 };
+
+(function enrichMedicalMock() {
+  const summaries = {
+    p004: {
+      overview: "高血压病史8年，近期门诊复查血压控制基本稳定，无明显胸闷胸痛，需继续随访家庭血压。",
+      features: ["高血压病史8年", "血压基本稳定", "无明显靶器官症状", "规律复诊"],
+      important: [
+        { label: "过敏史", value: "无" },
+        { label: "目前病情", value: "家庭血压约132-146/78-88mmHg" },
+        { label: "生活方式", value: "低盐饮食执行尚可，运动频率不足", level: "warning" }
+      ],
+      medications: [{ label: "降压药", count: 2 }, { label: "调脂药", count: 1 }],
+      suggestions: ["继续家庭血压监测", "复核晨峰血压", "增加每周有氧运动频次"]
+    },
+    p005: {
+      overview: "高血压伴超重，血压近期波动，需评估体重管理、饮食盐摄入和服药依从性。",
+      features: ["高血压", "BMI 25.7（超重）", "血压波动", "需体重管理"],
+      important: [
+        { label: "过敏史", value: "无" },
+        { label: "目前病情", value: "偶有头胀，家庭血压最高152/92mmHg", level: "warning" },
+        { label: "生活方式", value: "晚餐偏咸，运动不足" }
+      ],
+      medications: [{ label: "降压药", count: 2 }, { label: "其他", count: 1 }],
+      suggestions: ["控制体重，目标BMI <24", "记录一周早晚血压", "评估是否调整联合降压方案"]
+    },
+    p006: {
+      overview: "2型糖尿病合并超重，近期血糖控制欠佳，需关注饮食结构、运动和降糖药依从性。",
+      features: ["2型糖尿病", "空腹血糖偏高", "BMI 26.4（超重）", "头孢过敏"],
+      important: [
+        { label: "过敏史", value: "头孢过敏", level: "danger" },
+        { label: "目前病情", value: "空腹血糖约8.1-9.0 mmol/L", level: "warning" },
+        { label: "生活方式", value: "餐后运动不足，主食控制一般" }
+      ],
+      medications: [{ label: "降糖药", count: 2 }, { label: "调脂药", count: 1 }],
+      suggestions: ["复查HbA1c和尿微量白蛋白", "加强餐后血糖监测", "评估降糖药方案和饮食依从性"]
+    },
+    p007: {
+      overview: "中年男性高血压，体重偏高，近期复诊评估血压控制和心血管风险。",
+      features: ["高血压", "BMI 25.2（超重）", "中年男性", "心血管风险评估"],
+      important: [
+        { label: "过敏史", value: "无" },
+        { label: "目前病情", value: "工作压力大，睡眠不足，血压偶有升高", level: "warning" },
+        { label: "生活方式", value: "建议减少夜间加班和高盐外食" }
+      ],
+      medications: [{ label: "降压药", count: 1 }, { label: "生活方式干预", count: 1 }],
+      suggestions: ["完善家庭血压记录", "评估睡眠和压力因素", "复查血脂和肾功能"]
+    },
+    p008: {
+      overview: "高血压随访患者，体重正常，当前以复核血压趋势和用药耐受性为主。",
+      features: ["高血压随访", "体重正常", "血压趋势复核", "用药耐受性评估"],
+      important: [
+        { label: "过敏史", value: "无" },
+        { label: "目前病情", value: "近期无明显头晕胸闷，家庭血压较平稳" },
+        { label: "随访重点", value: "关注夜间血压和药物不良反应" }
+      ],
+      medications: [{ label: "降压药", count: 1 }, { label: "其他", count: 1 }],
+      suggestions: ["继续规律服药", "每月整理家庭血压记录", "定期复查肾功能和电解质"]
+    },
+    p009: {
+      overview: "接诊中患者，主诉头晕伴心慌1周，晨起血压升高，既往高血压10年合并血脂异常。",
+      features: ["头晕伴心慌1周", "晨起血压160/95mmHg", "高血压病史10年", "血脂异常"],
+      important: [
+        { label: "过敏史", value: "青霉素过敏", level: "danger" },
+        { label: "当前症状", value: "晨起头晕、偶发心慌、活动后气促", level: "warning" },
+        { label: "患者关注", value: "血脂复查结果" }
+      ],
+      medications: [{ label: "降压药", count: 2 }, { label: "调脂药", count: 1 }, { label: "抗血小板", count: 1 }],
+      suggestions: ["实时抽取问诊信息", "等待心脏超声和胸部CT结果", "评估降压和调脂方案"]
+    },
+    p010: {
+      overview: "接诊中糖尿病患者，近期空腹血糖偏高，需结合用药、饮食和运动情况评估。",
+      features: ["2型糖尿病", "空腹血糖偏高", "餐后血糖波动", "饮食依从性评估"],
+      important: [
+        { label: "过敏史", value: "无" },
+        { label: "当前问题", value: "空腹血糖持续偏高", level: "warning" },
+        { label: "随访重点", value: "HbA1c、肾功能和眼底筛查" }
+      ],
+      medications: [{ label: "降糖药", count: 2 }, { label: "调脂药", count: 1 }],
+      suggestions: ["询问低血糖事件", "复核二甲双胍耐受性", "完善并发症筛查"]
+    },
+    p011: {
+      overview: "心血管内科复诊已完成，既往血压和血脂问题较稳定，本次以复查结果解释和长期管理为主。",
+      features: ["复诊已完成", "血压稳定", "血脂随访", "长期管理"],
+      important: [
+        { label: "过敏史", value: "无" },
+        { label: "本次结论", value: "暂无急性不适，继续原方案随访" },
+        { label: "随访计划", value: "3个月后复查血脂和肝肾功能" }
+      ],
+      medications: [{ label: "降压药", count: 1 }, { label: "调脂药", count: 1 }],
+      suggestions: ["维持现有方案", "继续家庭血压监测", "按期复诊复查"]
+    },
+    p012: {
+      overview: "高血脂复诊已完成，LDL-C较前改善但仍需结合风险分层管理，强调饮食和规律用药。",
+      features: ["高血脂", "复诊已完成", "LDL-C管理", "生活方式干预"],
+      important: [
+        { label: "过敏史", value: "无" },
+        { label: "本次结论", value: "血脂较前改善，仍需持续达标管理" },
+        { label: "生活方式", value: "控制油脂摄入，增加规律运动" }
+      ],
+      medications: [{ label: "调脂药", count: 1 }, { label: "其他", count: 1 }],
+      suggestions: ["继续他汀治疗", "8-12周复查血脂", "关注肌痛等不良反应"]
+    }
+  };
+
+  const defaults = {
+    p011: { medicalCard: "310********4588", phone: "139****4821", height: "171cm", weight: "70kg", bmi: "23.9", completedAt: "2024-05-20 08:27" },
+    p012: { medicalCard: "420********6732", phone: "136****7309", height: "160cm", weight: "58kg", bmi: "22.7", completedAt: "2024-05-20 08:44" }
+  };
+
+  window.MedicalMock.patients.forEach((patient) => {
+    Object.assign(patient, defaults[patient.id] || {});
+    if (!patient.summary && summaries[patient.id]) patient.summary = summaries[patient.id];
+  });
+})();
