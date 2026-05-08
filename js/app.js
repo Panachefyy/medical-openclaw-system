@@ -150,7 +150,7 @@
       };
     }
     return {
-      historyTitle: "高血压病史",
+      historyTitle: "病史",
       historyMeta: "病程 10年",
       historyRows: mock.hypertensionHistory,
       advice: ["继续监测血压，注意低盐饮食和规律运动", "评估调脂治疗依从性，关注LDL-C达标", "颈动脉斑块稳定，建议定期复查超声"]
@@ -180,6 +180,18 @@
       ];
     }
     return mock.medications;
+  }
+
+  function renderMedicationTable(rows) {
+    if (!rows?.length) {
+      return '<div class="empty-state">暂无长期用药记录</div>';
+    }
+    return renderTable(rows, [
+      { key: "name", label: "药品名称" },
+      { key: "spec", label: "规格" },
+      { key: "usage", label: "用法用量" },
+      { key: "purpose", label: "用途" }
+    ]);
   }
 
   function renderStatusTabs() {
@@ -346,7 +358,7 @@
       return `
         <section class="panel skill-panel">
           <div class="section-heading">
-            <h3>OpenClaw Skill结果</h3>
+            <h3>智能体处理结果</h3>
             <small>尚未触发AI技能，点击右侧快捷能力开始分析</small>
           </div>
           <div class="skill-empty">可展示病情总结、检查解读、用药建议、病历文书和实时问诊抽取结果。</div>
@@ -357,7 +369,7 @@
     return `
       <section class="panel skill-panel">
         <div class="section-heading">
-          <h3>OpenClaw Skill结果</h3>
+          <h3>智能体处理结果</h3>
           <small>结构化结果已同步到页面模块</small>
         </div>
         <div class="skill-grid">
@@ -457,7 +469,7 @@
   function renderWaiting(patient) {
     const ctx = clinicalContext();
     const profile = patientProfile(patient);
-    const meds = ctx.medications?.length ? ctx.medications : medicationRows(patient);
+    const meds = Array.isArray(ctx.medications) ? ctx.medications : medicationRows(patient);
     els.mainPanel.innerHTML = `
       ${renderPatientHeader(patient)}
       ${renderContextNotice()}
@@ -465,7 +477,7 @@
       ${renderSkillResultPanel()}
         <section class="dashboard-grid">
           <article class="panel history-card">
-          <div class="section-heading"><h3>${profile.historyTitle} <small>${profile.historyMeta}</small></h3></div>
+          <div class="section-heading"><h3>病史 <small>${patient.tag || profile.historyTitle}</small></h3></div>
           <div class="history-list">${infoList(ctx.hypertensionHistory?.length ? ctx.hypertensionHistory : profile.historyRows)}</div>
           <button class="text-link" type="button">展开更多⌄</button>
         </article>
@@ -494,12 +506,7 @@
         </article>
         <article class="panel table-card">
           <div class="section-heading"><h3>当前用药 <small>患者自述/处方记录</small></h3><span>更新于 2024-05-18</span></div>
-          ${renderTable(meds, [
-            { key: "name", label: "药品名称" },
-            { key: "spec", label: "规格" },
-            { key: "usage", label: "用法用量" },
-            { key: "purpose", label: "用途" }
-          ])}
+          ${renderMedicationTable(meds)}
         </article>
       </section>
       <section class="panel ai-advice">
@@ -855,7 +862,7 @@
     renderStatusTabs();
     renderPatientList();
     try {
-      const result = await window.PatientService.fetchTodayVisits(state.status);
+      const result = await window.PatientService.fetchTodayVisits();
       state.patients = result.patients;
       state.statusTabs = result.statusTabs;
       if (!state.patients.some((patient) => patient.id === state.selectedPatientId)) {

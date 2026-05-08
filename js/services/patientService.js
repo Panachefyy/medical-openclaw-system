@@ -53,16 +53,14 @@
     return normalizeContext({}, patient);
   }
 
-  async function fetchTodayVisits(status) {
+  async function fetchTodayVisits() {
     const config = window.AppConfig.getConfig();
     if (!config.apiBaseUrl) {
       const patients = window.MedicalMock.patients.map(normalizePatient);
       return { patients, statusTabs: countTabs(patients), source: "mock" };
     }
 
-    const payload = await window.HttpClient.request(config.patientEndpoints.todayVisits, {
-      query: { status }
-    });
+    const payload = await window.HttpClient.request(config.patientEndpoints.todayVisits);
     const rows = Array.isArray(payload) ? payload : payload?.patients || payload?.data || [];
     const patients = rows.map(normalizePatient);
     return {
