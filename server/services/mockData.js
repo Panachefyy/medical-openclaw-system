@@ -467,6 +467,29 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function clinicalAdviceFor(patient) {
+  const tag = patient.tag || "";
+  if (/肺部感染/.test(tag)) {
+    return ["完善胸部CT/DR和血常规、CRP、PCT评估感染程度", "结合过敏史和病原学结果选择抗感染方案", "监测体温、血氧饱和度和咳痰颜色变化"];
+  }
+  if (/慢阻肺/.test(tag)) {
+    return ["复核吸入药使用方法和近期依从性", "结合血氧、CRP和胸部影像判断是否存在急性加重", "评估呼吸困难分级，必要时安排肺康复和随访肺功能"];
+  }
+  if (/哮喘/.test(tag)) {
+    return ["评估哮喘控制水平及近期诱因暴露", "复核吸入激素/支扩药使用方法，必要时调整阶梯治疗", "建议记录峰流速和急救药使用频次"];
+  }
+  if (/支气管扩张/.test(tag)) {
+    return ["完善胸部CT和痰培养，评估感染及菌群情况", "指导体位引流、雾化和气道廓清方案", "关注痰中带血或咯血增多，必要时及时处理"];
+  }
+  if (/睡眠呼吸暂停/.test(tag)) {
+    return ["安排睡眠呼吸监测，评估AHI和夜间最低血氧", "根据监测结果评估CPAP滴定及长期治疗适应证", "同步制定体重管理、睡姿调整和心血管风险随访计划"];
+  }
+  if (/肺结节/.test(tag)) {
+    return ["调阅既往胸部薄层CT进行同层面对比", "结合结节大小、密度和危险因素确定随访周期", "若出现咯血、消瘦或结节进展，及时升级评估路径"];
+  }
+  return patient.summary?.suggestions || ["补充完整病史、检查和检验资料", "结合主诉、生命体征和影像结果判断优先处理问题", "根据患者过敏史和既往用药调整后续诊疗计划"];
+}
+
 function contextOverrides(patient) {
   if (/肺部感染/.test(patient.tag)) {
     return {
@@ -607,9 +630,17 @@ function mergeContext(base, overrides) {
 
 export function buildMockContext(patient) {
   const context = mergeContext(clone(baseRespiratoryContext), contextOverrides(patient));
+  const historyRows = context.hypertensionHistory || [];
   return {
     ...context,
     patient,
+    history: {
+      title: "病史",
+      meta: patient.tag || "综合评估",
+      rows: historyRows
+    },
+    clinicalAdvice: clinicalAdviceFor(patient),
+    hypertensionHistory: historyRows,
     records: [
       {
         id: patient.recordId || patient.id,

@@ -1,5 +1,6 @@
 (function () {
   const mock = window.MedicalMock;
+  const viewModel = window.PatientViewModel;
   const state = {
     status: "waiting",
     selectedPatientId: "p001",
@@ -52,134 +53,15 @@
   }
 
   function filteredPatients() {
-    const keyword = state.search.trim().toLowerCase();
-    return state.patients.filter((patient) => {
-      const inStatus = patient.status === state.status;
-      if (!keyword) return inStatus;
-      return (
-        inStatus &&
-        [patient.name, patient.visitNo, patient.medicalCard, patient.phone].some((value) =>
-          String(value || "").toLowerCase().includes(keyword)
-        )
-      );
-    });
+    return viewModel.filterPatients(state.patients, { status: state.status, search: state.search });
   }
 
   function tagClass(text) {
-    if (/过敏|异常|风险|冠心病|偏高/.test(text)) return "danger";
-    if (/狭窄|超重|糖尿病|警/.test(text)) return "warning";
-    return "success";
+    return viewModel.tagClass(text);
   }
 
   function currentStatusTabs() {
-    return mock.statusTabs.map((tab) => ({
-      ...tab,
-      count: mock.patients.filter((patient) => patient.status === tab.key).length
-    }));
-  }
-
-  function fallbackSummary(patient) {
-    return {
-      overview: `${patient.name}，${patient.age}岁，${patient.tag || "待评估"}患者，本次就诊资料已汇总，建议结合病史、检查检验和用药情况继续评估。`,
-      features: [patient.tag || "待评估", patient.department || "门诊", patient.allergy && patient.allergy !== "无" ? `${patient.allergy}` : "无明确过敏史"],
-      important: [
-        { label: "过敏史", value: patient.allergy || "无", level: patient.allergy && patient.allergy !== "无" ? "danger" : "" },
-        { label: "本次就诊", value: patient.visitDate || "--" }
-      ],
-      medications: [{ label: "当前用药", count: 0 }],
-      suggestions: ["补充完整病史和检查资料", "结合临床实际评估诊疗方案"]
-    };
-  }
-
-  function patientProfile(patient) {
-    const tag = patient.tag || "";
-    if (/糖尿病/.test(tag)) {
-      return {
-        historyTitle: "糖尿病病史",
-        historyMeta: "代谢管理",
-        historyRows: [
-          ["首次诊断", "2018-06-20"],
-          ["近期血糖", "空腹 7.8-9.2 mmol/L"],
-          ["相关症状", "偶有乏力，无明显多饮多尿"],
-          ["并发症筛查", "建议复查尿微量白蛋白、眼底"],
-          ["生活方式", "主食控制一般，餐后运动不足"]
-        ],
-        advice: ["复查 HbA1c，评估近3个月血糖控制", "加强餐后血糖监测和饮食记录", "结合肾功能和低血糖风险调整降糖方案"]
-      };
-    }
-    if (/冠心病/.test(tag)) {
-      return {
-        historyTitle: "冠心病病史",
-        historyMeta: "PCI术后随访",
-        historyRows: [
-          ["既往病史", "冠心病，PCI术后"],
-          ["近期症状", "活动后胸闷 3 天"],
-          ["风险因素", "高龄，血脂异常，高血压病史"],
-          ["当前重点", "排查心肌缺血和心律失常"],
-          ["随访建议", "复核心电图、肌钙蛋白和用药依从性"]
-        ],
-        advice: ["优先排查心肌缺血相关风险", "完善心电图及心肌损伤标志物", "复核抗血小板和调脂治疗方案"]
-      };
-    }
-    if (/高血脂/.test(tag)) {
-      return {
-        historyTitle: "高血脂病史",
-        historyMeta: "血脂管理",
-        historyRows: [
-          ["首次发现", "2022-08-18"],
-          ["近期血脂", "LDL-C仍需持续达标管理"],
-          ["相关风险", "需结合ASCVD风险分层"],
-          ["生活方式", "油脂摄入需控制，运动频率不足"],
-          ["随访计划", "8-12周复查血脂和肝功能"]
-        ],
-        advice: ["继续规律调脂治疗", "复查血脂四项和肝功能", "强化饮食控制和运动管理"]
-      };
-    }
-    if (/复诊/.test(tag)) {
-      return {
-        historyTitle: "复诊记录",
-        historyMeta: "长期随访",
-        historyRows: [
-          ["本次类型", "慢病复诊"],
-          ["病情变化", "近期无急性不适"],
-          ["用药情况", "自述规律服药"],
-          ["检查结果", "暂无明显异常报警项"],
-          ["随访计划", "按慢病管理周期复查"]
-        ],
-        advice: ["维持规律随访", "继续记录家庭监测数据", "按计划复查相关指标"]
-      };
-    }
-    return {
-      historyTitle: "病史",
-      historyMeta: "病程 10年",
-      historyRows: mock.hypertensionHistory,
-      advice: ["继续监测血压，注意低盐饮食和规律运动", "评估调脂治疗依从性，关注LDL-C达标", "颈动脉斑块稳定，建议定期复查超声"]
-    };
-  }
-
-  function medicationRows(patient) {
-    const tag = patient.tag || "";
-    if (/糖尿病/.test(tag)) {
-      return [
-        { name: "二甲双胍缓释片", spec: "0.5g", usage: "每日2次 每次1片", purpose: "降糖" },
-        { name: "达格列净片", spec: "10mg", usage: "每日1次 每次1片", purpose: "降糖/心肾保护" },
-        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" }
-      ];
-    }
-    if (/冠心病/.test(tag)) {
-      return [
-        { name: "阿司匹林肠溶片", spec: "100mg", usage: "每日1次 每次1片", purpose: "抗血小板" },
-        { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
-        { name: "美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次1片", purpose: "控制心率" }
-      ];
-    }
-    if (/高血脂/.test(tag)) {
-      return [
-        { name: "瑞舒伐他汀钙片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "调脂" },
-        { name: "辅酶Q10软胶囊", spec: "10mg", usage: "每日2次 每次1粒", purpose: "辅助治疗" }
-      ];
-    }
-    return mock.medications;
+    return viewModel.countStatusTabs(mock.statusTabs, state.patients);
   }
 
   function renderMedicationTable(rows) {
@@ -309,8 +191,11 @@
 
   function renderAiSummary(patient) {
     const skillSummary = state.skillResults.patient_summary?.summaryCard;
-    const meds = medicationRows(patient);
-    const summary = skillSummary || patient.summary || fallbackSummary(patient);
+    const ctx = clinicalContext();
+    const aiSummary = viewModel.buildAiSummaryView({ patient, context: ctx, skillSummary, mock });
+    const meds = aiSummary.medications;
+    const groups = aiSummary.medicationGroups;
+    const summary = aiSummary.summary;
     return `
       <section class="ai-summary panel">
         <div class="section-heading">
@@ -337,10 +222,10 @@
             <h4>用药情况</h4>
             <div class="med-count"><strong>${meds.length}</strong><span>种在用药物</span></div>
             <div class="med-name-list">
-              ${meds.slice(0, 4).map((med) => `<em>${med.name}</em>`).join("")}
+              ${meds.length ? meds.slice(0, 4).map((med) => `<em>${med.name}</em>`).join("") : "<em>暂无长期用药记录</em>"}
             </div>
             <div class="med-group-list">
-              ${summary.medications.map((item) => `<span>${item.label}<b>${item.count}</b>种</span>`).join("")}
+              ${groups.map((item) => `<span>${item.label}<b>${item.count}</b>种</span>`).join("")}
             </div>
           </div>
           <div class="summary-block">
@@ -466,56 +351,80 @@
     `;
   }
 
+  function renderHistoryCard(history) {
+    return `
+      <article class="panel history-card">
+        <div class="section-heading"><h3>${history.title} <small>${history.meta}</small></h3></div>
+        <div class="history-list">${infoList(history.rows || [])}</div>
+        <button class="text-link" type="button">展开更多⌄</button>
+      </article>
+    `;
+  }
+
+  function renderExamCard(title, meta, items) {
+    return `
+      <article class="panel exam-card">
+        <div class="section-heading"><h3>${title} <small>${meta}</small></h3><button type="button">查看更多 ›</button></div>
+        <ul class="exam-list">${examList(items || [])}</ul>
+      </article>
+    `;
+  }
+
+  function renderLabCard(rows) {
+    return `
+      <article class="panel table-card">
+        <div class="section-heading"><h3>LIS检验信息 <small>最近</small></h3><button type="button">查看更多 ›</button></div>
+        ${renderTable(rows || [], [
+          { key: "item", label: "检验项目" },
+          { key: "result", label: "结果" },
+          { key: "trend", label: "" },
+          { key: "unit", label: "单位" },
+          { key: "ref", label: "参考范围" },
+          { key: "date", label: "检验日期" }
+        ])}
+      </article>
+    `;
+  }
+
+  function renderMedicationCard(rows) {
+    return `
+      <article class="panel table-card">
+        <div class="section-heading"><h3>当前用药 <small>患者自述/处方记录</small></h3><span>更新于 2024-05-18</span></div>
+        ${renderMedicationTable(rows || [])}
+      </article>
+    `;
+  }
+
+  function renderAiAdviceCard(advice) {
+    return `
+      <section class="panel ai-advice">
+        <h3>问诊助手AI建议 <small>基于病史及检查结果</small></h3>
+        <ol>${(advice || []).map((item) => `<li>${item}</li>`).join("")}</ol>
+        <small>*AI建议仅供参考，请结合临床实际情况判断</small>
+      </section>
+    `;
+  }
+
   function renderWaiting(patient) {
     const ctx = clinicalContext();
-    const profile = patientProfile(patient);
-    const meds = Array.isArray(ctx.medications) ? ctx.medications : medicationRows(patient);
+    const waiting = viewModel.buildWaitingView({ patient, context: ctx, mock });
     els.mainPanel.innerHTML = `
       ${renderPatientHeader(patient)}
       ${renderContextNotice()}
       ${renderAiSummary(patient)}
       ${renderSkillResultPanel()}
         <section class="dashboard-grid">
-          <article class="panel history-card">
-          <div class="section-heading"><h3>病史 <small>${patient.tag || profile.historyTitle}</small></h3></div>
-          <div class="history-list">${infoList(ctx.hypertensionHistory?.length ? ctx.hypertensionHistory : profile.historyRows)}</div>
-          <button class="text-link" type="button">展开更多⌄</button>
-        </article>
-        <article class="panel exam-card">
-          <div class="section-heading"><h3>影像检查结论 <small>本院</small></h3><button type="button">查看更多 ›</button></div>
-          <ul class="exam-list">${examList(ctx.imaging)}</ul>
-        </article>
-        <article class="panel exam-card">
-          <div class="section-heading"><h3>超声检查结论 <small>本院</small></h3><button type="button">查看更多 ›</button></div>
-          <ul class="exam-list">${examList(ctx.ultrasound)}</ul>
-        </article>
+        ${renderHistoryCard(waiting.history)}
+        ${renderExamCard("影像检查结论", "本院", waiting.imaging)}
+        ${renderExamCard("超声检查结论", "本院", waiting.ultrasound)}
         <article class="panel chart-card">
           <div class="section-heading"><h3>血脂检查趋势 <small>近2年</small></h3><span>单位：mmol/L</span></div>
           <div id="lipidChart" class="chart"></div>
         </article>
-        <article class="panel table-card">
-          <div class="section-heading"><h3>LIS检验信息 <small>最近</small></h3><button type="button">查看更多 ›</button></div>
-          ${renderTable(ctx.lis, [
-            { key: "item", label: "检验项目" },
-            { key: "result", label: "结果" },
-            { key: "trend", label: "" },
-            { key: "unit", label: "单位" },
-            { key: "ref", label: "参考范围" },
-            { key: "date", label: "检验日期" }
-          ])}
-        </article>
-        <article class="panel table-card">
-          <div class="section-heading"><h3>当前用药 <small>患者自述/处方记录</small></h3><span>更新于 2024-05-18</span></div>
-          ${renderMedicationTable(meds)}
-        </article>
+        ${renderLabCard(waiting.labs)}
+        ${renderMedicationCard(waiting.medications)}
       </section>
-      <section class="panel ai-advice">
-        <h3>问诊助手AI建议 <small>基于病史及检查结果</small></h3>
-        <ol>
-          ${profile.advice.map((item) => `<li>${item}</li>`).join("")}
-        </ol>
-        <small>*AI建议仅供参考，请结合临床实际情况判断</small>
-      </section>
+      ${renderAiAdviceCard(waiting.advice)}
       <footer class="action-bar">
         ${
           patient.status === "done"

@@ -34,9 +34,16 @@
 
   function normalizeContext(raw, patient) {
     const mock = window.MedicalMock;
+    const historyRows = raw.hypertensionHistory || raw.history?.rows || raw.history?.hypertension || mock.hypertensionHistory;
     return {
       patient,
-      hypertensionHistory: raw.hypertensionHistory || raw.history?.hypertension || mock.hypertensionHistory,
+      history: raw.history || {
+        title: "病史",
+        meta: raw.historyMeta || patient.tag || "综合评估",
+        rows: historyRows
+      },
+      clinicalAdvice: raw.clinicalAdvice || raw.aiAdvice || patient.summary?.suggestions || [],
+      hypertensionHistory: historyRows,
       imaging: raw.imaging || raw.exams?.imaging || mock.imaging,
       ultrasound: raw.ultrasound || raw.exams?.ultrasound || mock.ultrasound,
       lipids: raw.lipids || raw.trends?.lipids || mock.lipids,
