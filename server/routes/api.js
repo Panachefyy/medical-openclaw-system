@@ -1,8 +1,13 @@
-import { appMeta, buildMockContext, patients, statusTabs } from "../services/mockData.js";
+import { departmentOptions, getDepartmentDataset } from "../services/mockData.js";
 import { createOpenClawGatewayClient } from "../services/openclawGatewayClient.js";
 import { readJson, sendJson, sendSse } from "../http/responses.js";
 
-function findPatient(visitId, patientId) {
+function departmentFromUrl(url) {
+  return getDepartmentDataset(url.searchParams.get("department") || "respiratory");
+}
+
+function findPatient(dataset, visitId, patientId) {
+  const patients = dataset.patients;
   return patients.find((patient) => patient.visitNo === visitId || patient.id === patientId) || patients[0];
 }
 
@@ -34,16 +39,18 @@ export async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/visits/today") {
+    const dataset = departmentFromUrl(url);
     const status = url.searchParams.get("status");
-    const filtered = status ? patients.filter((patient) => patient.status === status) : patients;
-    sendJson(res, 200, { appMeta, patients: filtered, statusTabs });
+    const filtered = status ? dataset.patients.filter((patient) => patient.status === status) : dataset.patients;
+    sendJson(res, 200, { appMeta: dataset.appMeta, departmentOptions, patients: filtered, statusTabs: dataset.statusTabs });
     return true;
   }
 
   const contextMatch = url.pathname.match(/^\/api\/visits\/([^/]+)\/context$/);
   if (req.method === "GET" && contextMatch) {
-    const patient = findPatient(decodeURIComponent(contextMatch[1]), url.searchParams.get("patientId"));
-    sendJson(res, 200, buildMockContext(patient));
+    const dataset = departmentFromUrl(url);
+    const patient = findPatient(dataset, decodeURIComponent(contextMatch[1]), url.searchParams.get("patientId"));
+    sendJson(res, 200, dataset.buildContext(patient));
     return true;
   }
 

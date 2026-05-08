@@ -632,9 +632,54 @@ function mergeContext(base, overrides) {
   return { ...base, ...overrides };
 }
 
+function respiratoryMedications(patient) {
+  const tag = patient.tag || "";
+  if (patient.id === "record-8980") {
+    return [
+      { name: "布地奈德福莫特罗吸入粉雾剂", spec: "160/4.5μg", usage: "每日2次 每次1吸", purpose: "维持治疗" },
+      { name: "孟鲁司特钠片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "减轻夜间咳嗽" }
+    ];
+  }
+  if (/肺部感染/.test(tag)) {
+    return [
+      { name: "盐酸氨溴索口服溶液", spec: "30mg/10ml", usage: "每日3次 每次10ml", purpose: "化痰" },
+      { name: "对乙酰氨基酚片", spec: "0.5g", usage: "发热时按需使用", purpose: "退热" }
+    ];
+  }
+  if (/哮喘/.test(tag)) {
+    return [
+      { name: "布地奈德福莫特罗吸入粉雾剂", spec: "160/4.5μg", usage: "每日2次 每次1吸", purpose: "控制治疗" },
+      { name: "沙丁胺醇气雾剂", spec: "100μg", usage: "喘息时按需吸入", purpose: "急救缓解" }
+    ];
+  }
+  if (/支气管扩张/.test(tag)) {
+    return [
+      { name: "乙酰半胱氨酸泡腾片", spec: "0.6g", usage: "每日1次 每次1片", purpose: "祛痰" },
+      { name: "生理盐水雾化", spec: "5ml", usage: "每日1-2次", purpose: "气道廓清" }
+    ];
+  }
+  if (/睡眠呼吸暂停/.test(tag)) {
+    return [
+      { name: "CPAP治疗", spec: "夜间", usage: "每晚使用", purpose: "改善夜间低氧" },
+      { name: "体重管理处方", spec: "生活方式", usage: "持续执行", purpose: "非药物干预" }
+    ];
+  }
+  if (/肺结节/.test(tag)) return [];
+  if (/复诊/.test(tag)) {
+    return [
+      { name: "布地奈德福莫特罗吸入粉雾剂", spec: "160/4.5μg", usage: "每日2次 每次1吸", purpose: "维持治疗" }
+    ];
+  }
+  return [
+    { name: "噻托溴铵吸入粉雾剂", spec: "18μg", usage: "每日1次 每次1粒", purpose: "长效支气管扩张" },
+    { name: "乙酰半胱氨酸颗粒", spec: "0.2g", usage: "每日3次 每次1包", purpose: "祛痰" }
+  ];
+}
+
 export function buildMockContext(patient) {
   const context = mergeContext(clone(baseRespiratoryContext), contextOverrides(patient));
   const historyRows = context.hypertensionHistory || [];
+  const medications = respiratoryMedications(patient);
   return {
     ...context,
     patient,
@@ -645,6 +690,7 @@ export function buildMockContext(patient) {
     },
     clinicalAdvice: clinicalAdviceFor(patient),
     hypertensionHistory: historyRows,
+    medications,
     records: [
       {
         id: patient.recordId || patient.id,
@@ -654,5 +700,160 @@ export function buildMockContext(patient) {
     ],
     diagnoses: [patient.tag || "待评估"],
     vitals: context.vitals || {}
+  };
+}
+
+const cardiologyPatients = [
+  ["cv001", "waiting", "张建国", "男", 65, "高血压", "青霉素过敏", "09:30"],
+  ["cv002", "waiting", "刘秀兰", "女", 72, "冠心病", "无", "09:45"],
+  ["cv003", "waiting", "王德明", "男", 68, "房颤", "磺胺类药物过敏", "10:00"],
+  ["cv004", "waiting", "赵美华", "女", 76, "心衰随访", "无", "10:15"],
+  ["cv005", "waiting", "孙立强", "男", 55, "血脂异常", "无", "10:30"],
+  ["cv006", "waiting", "周雅琴", "女", 62, "胸痛评估", "头孢过敏", "10:45"],
+  ["cv007", "waiting", "吴志远", "男", 50, "早搏", "无", "11:00"],
+  ["cv008", "waiting", "郑雪梅", "女", 63, "瓣膜病", "无", "11:15"],
+  ["cv009", "active", "张建国", "男", 65, "高血压", "青霉素过敏", "09:30"],
+  ["cv010", "active", "刘秀兰", "女", 72, "冠心病", "无", "09:45"],
+  ["cv011", "done", "钱国平", "男", 49, "高血压复诊", "无", "08:15"],
+  ["cv012", "done", "陈丽华", "女", 62, "血脂复诊", "无", "08:30"],
+  ["cv013", "done", "何长青", "男", 70, "冠心病复诊", "无", "08:45"]
+].map(([id, status, name, sex, age, tag, allergy, time], index) => ({
+  id,
+  status,
+  name,
+  sex,
+  age,
+  visitNo: `CV20240520${String(index + 1).padStart(2, "0")}`,
+  medicalCard: `CV********20${String(index + 1).padStart(2, "0")}`,
+  phone: `13${(800000000 + index * 18631).toString().slice(0, 9)}`,
+  time,
+  tag,
+  allergy,
+  height: sex === "男" ? "172cm" : "160cm",
+  weight: sex === "男" ? "74kg" : "60kg",
+  bmi: sex === "男" ? "25.0" : "23.4",
+  department: "心血管内科",
+  doctor: "张医生",
+  visitDate: `2024-05-20 ${time}`,
+  waitEstimate: status === "waiting" ? `约${15 + index * 8}分钟` : undefined,
+  consultStartedAt: status === "active" ? `${time}:00` : undefined,
+  completedAt: status === "done" ? `2024-05-20 ${time}` : undefined,
+  summary: summary({
+    overview: `${tag}患者，本次就诊需结合血压、心电图、心脏超声、血脂和当前心血管用药综合评估。`,
+    features: [tag, "心血管内科", "风险分层", "用药复核"],
+    important: [
+      { label: "过敏史", value: allergy, level: allergy !== "无" ? "danger" : "" },
+      { label: "当前重点", value: "评估症状变化、危险分层和用药依从性", level: "warning" },
+      { label: "随访计划", value: "结合检查结果制定复诊和长期管理方案" }
+    ],
+    medications: [{ label: "心血管用药", count: 2 }],
+    suggestions: ["复核家庭监测记录", "完善心电图和相关检验", "根据风险分层调整治疗方案"]
+  })
+}));
+
+const cardiologyMedicationProfiles = {
+  高血压: [
+    { name: "苯磺酸氨氯地平片", spec: "5mg", usage: "每日1次 每次1片", purpose: "降压" },
+    { name: "厄贝沙坦片", spec: "150mg", usage: "每日1次 每次1片", purpose: "降压/心肾保护" },
+    { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" }
+  ],
+  冠心病: [
+    { name: "阿司匹林肠溶片", spec: "100mg", usage: "每日1次 每次1片", purpose: "抗血小板" },
+    { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+    { name: "单硝酸异山梨酯缓释片", spec: "40mg", usage: "每日1次 每次1片", purpose: "抗心绞痛" }
+  ],
+  房颤: [
+    { name: "琥珀酸美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次半片", purpose: "控制心率" },
+    { name: "利伐沙班片", spec: "15mg", usage: "每日1次 每次1片", purpose: "抗凝" }
+  ],
+  心衰: [
+    { name: "呋塞米片", spec: "20mg", usage: "每日1次 每次1片", purpose: "利尿" },
+    { name: "沙库巴曲缬沙坦钠片", spec: "50mg", usage: "每日2次 每次1片", purpose: "心衰标准治疗" }
+  ],
+  血脂: [
+    { name: "瑞舒伐他汀钙片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+    { name: "依折麦布片", spec: "10mg", usage: "每日1次 每次1片", purpose: "联合降脂" }
+  ],
+  胸痛: [
+    { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+    { name: "硝酸甘油片", spec: "0.5mg", usage: "胸痛时舌下含服", purpose: "胸痛急救备用" }
+  ],
+  早搏: [
+    { name: "琥珀酸美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次半片", purpose: "控制心率/减少早搏" }
+  ],
+  瓣膜: [
+    { name: "厄贝沙坦片", spec: "150mg", usage: "每日1次 每次1片", purpose: "血压管理" },
+    { name: "呋塞米片", spec: "20mg", usage: "气促或水肿时遵医嘱使用", purpose: "容量管理" }
+  ]
+};
+
+function cardiologyMedications(patient) {
+  const key = Object.keys(cardiologyMedicationProfiles).find((item) => patient.tag.includes(item));
+  return key ? cardiologyMedicationProfiles[key] : cardiologyMedicationProfiles["高血压"];
+}
+
+function buildCardiologyContext(patient) {
+  return {
+    patient,
+    history: {
+      title: "病史",
+      meta: patient.tag,
+      rows: [
+        ["主要病史", `${patient.tag}相关问题随访`],
+        ["近期症状", "头晕、心悸、胸闷或活动耐量变化"],
+        ["风险因素", "高血压、血脂异常、年龄及生活方式因素"],
+        ["本次重点", "复核心电图、心脏超声、血脂和当前用药"]
+      ]
+    },
+    clinicalAdvice: ["复核家庭监测记录和服药依从性", "结合心电图、心肌标志物和心脏超声判断风险", "根据危险分层调整长期管理方案"],
+    hypertensionHistory: [
+      ["主要病史", `${patient.tag}相关问题随访`],
+      ["近期症状", "头晕、心悸、胸闷或活动耐量变化"],
+      ["风险因素", "高血压、血脂异常、年龄及生活方式因素"],
+      ["本次重点", "复核心电图、心脏超声、血脂和当前用药"]
+    ],
+    imaging: [
+      { date: "2024-05-18", name: "冠脉CTA", status: "轻中度狭窄", desc: "前降支近段钙化斑块，管腔约40%狭窄。" },
+      { date: "2024-03-18", name: "颈动脉CTA", status: "斑块形成", desc: "双侧颈动脉粥样硬化，右侧轻度狭窄。" }
+    ],
+    ultrasound: [
+      { date: "2024-05-18", name: "心脏超声", status: "左室舒张功能减低", desc: "EF 58%，左室舒张功能减低，轻度二尖瓣反流。" }
+    ],
+    lipids: baseRespiratoryContext.lipids,
+    lis: [
+      { item: "低密度脂蛋白（LDL-C）", result: "2.48", trend: "up", unit: "mmol/L", ref: "高危目标 <1.8", date: "2024-05-18" },
+      { item: "肌钙蛋白I（cTnI）", result: "0.012", trend: "", unit: "ng/mL", ref: "< 0.04", date: "2024-05-18" },
+      { item: "NT-proBNP", result: "286", trend: "up", unit: "pg/mL", ref: "< 125", date: "2024-05-18" }
+    ],
+    medications: cardiologyMedications(patient),
+    consultDialog: [
+      { role: "doctor", time: "09:31:12", text: "最近胸闷、心悸或头晕有没有加重？" },
+      { role: "patient", time: "09:31:18", text: "早上容易头晕，走快一点会胸闷。" }
+    ],
+    diagnoses: [patient.tag],
+    vitals: { bloodPressure: "150/90 mmHg", heartRate: "82 次/分" },
+    records: [{ id: patient.id, title: "心血管内科门诊记录", date: patient.visitDate }]
+  };
+}
+
+export const departmentOptions = [
+  { key: "respiratory", name: "呼吸科" },
+  { key: "cardiology", name: "心血管内科" }
+];
+
+export function getDepartmentDataset(key = "respiratory") {
+  if (key === "cardiology") {
+    return {
+      appMeta: { departmentKey: "cardiology", departmentName: "心血管内科" },
+      patients: cardiologyPatients,
+      statusTabs,
+      buildContext: buildCardiologyContext
+    };
+  }
+  return {
+    appMeta: { ...appMeta, departmentKey: "respiratory" },
+    patients,
+    statusTabs,
+    buildContext: buildMockContext
   };
 }

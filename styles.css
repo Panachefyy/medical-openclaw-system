@@ -99,6 +99,14 @@ button {
   background: rgba(255, 255, 255, 0.24);
   color: #fff;
   font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.brand #departmentName:hover,
+.brand #departmentName:focus-visible {
+  background: rgba(255, 255, 255, 0.34);
+  outline: 0;
 }
 
 .global-search {

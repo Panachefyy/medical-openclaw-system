@@ -6,7 +6,7 @@
 
 - `index.html`：页面入口。
 - `styles.css`：完整页面样式。
-- `js/data/mock.js`：前端本地 mock 数据，用于心血管内科演示。
+- `js/data/mock.js`：前端本地 mock 数据，内置心血管内科和呼吸科演示。
 - `js/core/config.js`：前端运行配置，包含业务 API 和 OpenClaw 代理接口地址。
 - `js/core/http.js`：统一请求封装，处理 JSON、超时和错误。
 - `js/domain/patientStats.js`：患者状态统计和列表筛选等纯业务工具。
@@ -17,7 +17,7 @@
 - `js/viewModels/patientViewModel.js`：把患者上下文加工成页面展示模型。
 - `js/presentation/app.js`：页面渲染、状态切换、图表、AI 对话交互。
 - `js/presentation/shell.js`：页面外壳行为，如全屏按钮和 service worker 注册。
-- `server/services/mockData.js`：后端 API mock 数据，用于呼吸科演示。
+- `server/services/mockData.js`：后端 API mock 数据，内置呼吸科和心血管内科演示。
 
 ## 本地运行
 
@@ -44,6 +44,8 @@ npm start
 ```text
 http://127.0.0.1:3000/
 ```
+
+顶部科室名称支持点击切换，可在心血管内科和呼吸科两套演示数据之间切换。`npm start` 和 `npm run start:mock` 都内置这两套科室数据。
 
 ## Chrome 安装版（PWA）
 

@@ -6,6 +6,7 @@ function cardioSummary({ overview, features, important, medications, suggestions
 
 window.MedicalMock = {
   appMeta: {
+    departmentKey: "cardiology",
     departmentName: CARDIO_DEPARTMENT
   },
   statusTabs: [
@@ -466,3 +467,177 @@ window.MedicalMock = {
     record: "主诉：头晕伴心慌1周。现病史：患者近1周晨起头晕明显，偶有心慌，家庭自测血压最高160/95mmHg，服药后145/88mmHg，伴爬楼胸闷气促，否认持续胸痛及下肢水肿。"
   }
 };
+
+window.MedicalMock.medicationProfiles = {
+  高血压: [
+    { name: "苯磺酸氨氯地平片", spec: "5mg", usage: "每日1次 每次1片", purpose: "降压" },
+    { name: "厄贝沙坦片", spec: "150mg", usage: "每日1次 每次1片", purpose: "降压/心肾保护" },
+    { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" }
+  ],
+  冠心病: [
+    { name: "阿司匹林肠溶片", spec: "100mg", usage: "每日1次 每次1片", purpose: "抗血小板" },
+    { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+    { name: "单硝酸异山梨酯缓释片", spec: "40mg", usage: "每日1次 每次1片", purpose: "抗心绞痛" }
+  ],
+  房颤: [
+    { name: "琥珀酸美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次半片", purpose: "控制心率" },
+    { name: "利伐沙班片", spec: "15mg", usage: "每日1次 每次1片", purpose: "抗凝" }
+  ],
+  心衰随访: [
+    { name: "呋塞米片", spec: "20mg", usage: "每日1次 每次1片", purpose: "利尿" },
+    { name: "沙库巴曲缬沙坦钠片", spec: "50mg", usage: "每日2次 每次1片", purpose: "心衰标准治疗" },
+    { name: "螺内酯片", spec: "20mg", usage: "每日1次 每次1片", purpose: "抗醛固酮" }
+  ],
+  血脂异常: [
+    { name: "瑞舒伐他汀钙片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+    { name: "依折麦布片", spec: "10mg", usage: "每日1次 每次1片", purpose: "联合降脂" }
+  ],
+  胸痛评估: [
+    { name: "阿托伐他汀钙片", spec: "20mg", usage: "每晚1次 每次1片", purpose: "调脂" },
+    { name: "硝酸甘油片", spec: "0.5mg", usage: "胸痛时舌下含服", purpose: "胸痛急救备用" }
+  ],
+  早搏: [
+    { name: "琥珀酸美托洛尔缓释片", spec: "47.5mg", usage: "每日1次 每次半片", purpose: "控制心率/减少早搏" },
+    { name: "辅酶Q10胶囊", spec: "10mg", usage: "每日2次 每次1粒", purpose: "辅助治疗" }
+  ],
+  瓣膜病: [
+    { name: "厄贝沙坦片", spec: "150mg", usage: "每日1次 每次1片", purpose: "血压管理" },
+    { name: "呋塞米片", spec: "20mg", usage: "气促或水肿时遵医嘱使用", purpose: "容量管理" }
+  ]
+};
+
+const respiratoryPatients = [
+  ["rp001", "waiting", "王方寿", "男", 86, "慢阻肺", "青霉素过敏", "09:30"],
+  ["rp002", "waiting", "刘桂兰", "女", 78, "慢阻肺", "无", "09:45"],
+  ["rp003", "waiting", "陈建国", "男", 69, "肺部感染", "头孢过敏", "10:00"],
+  ["rp004", "waiting", "赵美华", "女", 63, "哮喘", "无", "10:15"],
+  ["rp005", "waiting", "孙立强", "男", 58, "慢阻肺", "无", "10:30"],
+  ["rp006", "waiting", "周雅琴", "女", 71, "支气管扩张", "无", "10:45"],
+  ["rp007", "waiting", "吴志远", "男", 52, "睡眠呼吸暂停", "无", "11:00"],
+  ["rp008", "waiting", "郑雪梅", "女", 60, "肺结节随访", "无", "11:15"],
+  ["rp009", "active", "王方寿", "男", 86, "慢阻肺", "青霉素过敏", "09:30"],
+  ["rp010", "active", "陈建国", "男", 69, "肺部感染", "头孢过敏", "10:00"],
+  ["rp011", "done", "钱国平", "男", 74, "慢阻肺复诊", "无", "08:15"],
+  ["rp012", "done", "陈丽华", "女", 62, "肺结节复诊", "无", "08:30"],
+  ["rp013", "done", "何长青", "男", 70, "哮喘复诊", "无", "08:45"]
+].map(([id, status, name, sex, age, tag, allergy, time], index) => ({
+  id,
+  status,
+  name,
+  sex,
+  age,
+  visitNo: `RP20240520${String(index + 1).padStart(2, "0")}`,
+  medicalCard: `RP********20${String(index + 1).padStart(2, "0")}`,
+  phone: `13${(800000000 + index * 17321).toString().slice(0, 9)}`,
+  time,
+  tag,
+  allergy,
+  height: sex === "男" ? "170cm" : "160cm",
+  weight: sex === "男" ? "68kg" : "56kg",
+  bmi: sex === "男" ? "23.5" : "21.9",
+  department: "呼吸科",
+  doctor: "张医生",
+  visitDate: `2024-05-20 ${time}`,
+  waitEstimate: status === "waiting" ? `约${15 + index * 8}分钟` : undefined,
+  consultStartedAt: status === "active" ? `${time}:00` : undefined,
+  completedAt: status === "done" ? `2024-05-20 ${time}` : undefined,
+  summary: cardioSummary({
+    overview: `${tag}患者，近期以咳嗽、咳痰、气促或复查为主，需结合胸部影像、炎症指标、血氧和当前呼吸用药评估。`,
+    features: [tag, "呼吸科", "胸部影像评估", "血氧监测"],
+    important: [
+      { label: "过敏史", value: allergy, level: allergy !== "无" ? "danger" : "" },
+      { label: "当前重点", value: "评估急性加重、感染风险和吸入治疗依从性", level: "warning" },
+      { label: "随访计划", value: "结合肺功能、胸部CT和症状变化制定复查周期" }
+    ],
+    medications: [{ label: "呼吸治疗", count: 1 }, { label: "对症治疗", count: 1 }],
+    suggestions: ["复核吸入装置使用方法", "监测SpO2和活动后气促", "结合影像和炎症指标调整方案"]
+  })
+}));
+
+const respiratoryData = {
+  appMeta: { departmentKey: "respiratory", departmentName: "呼吸科" },
+  statusTabs: window.MedicalMock.statusTabs,
+  patients: respiratoryPatients,
+  hypertensionHistory: [
+    ["主要病史", "慢性呼吸道疾病或肺部影像异常随访"],
+    ["近期症状", "咳嗽、咳痰、气促，部分患者夜间加重"],
+    ["诱发因素", "受凉、感染、粉尘/烟雾暴露或吸入药不规律"],
+    ["既往检查", "胸部CT、肺功能、血氧饱和度记录"],
+    ["生活方式", "戒烟/避免二手烟，规律吸入治疗，适度肺康复训练"]
+  ],
+  imaging: [
+    { date: "2024-05-18", name: "胸部CT平扫", status: "异常", desc: "双肺纹理增多，局部支气管壁增厚，需结合感染指标。" },
+    { date: "2024-03-10", name: "胸部DR", status: "随访", desc: "双下肺少许慢性炎性改变，未见明显胸腔积液。" },
+    { date: "2023-12-12", name: "低剂量肺CT", status: "结节随访", desc: "右上肺微小结节，形态较前稳定。" }
+  ],
+  ultrasound: [
+    { date: "2024-05-18", name: "心脏超声", status: "基本正常", desc: "EF 61%，肺动脉压未见明显升高。" },
+    { date: "2024-05-18", name: "下肢静脉超声", status: "正常", desc: "双下肢深静脉未见明显血栓形成。" }
+  ],
+  lipids: window.MedicalMock.lipids,
+  lis: [
+    { item: "白细胞计数（WBC）", result: "9.8", trend: "up", unit: "10^9/L", ref: "3.5~9.5", date: "2024-05-18" },
+    { item: "C反应蛋白（CRP）", result: "18.6", trend: "up", unit: "mg/L", ref: "< 8", date: "2024-05-18" },
+    { item: "降钙素原（PCT）", result: "0.08", trend: "", unit: "ng/mL", ref: "< 0.05", date: "2024-05-18" },
+    { item: "血氧饱和度（SpO2）", result: "94", trend: "down", unit: "%", ref: "95~100", date: "2024-05-18" },
+    { item: "FEV1/FVC", result: "61", trend: "", unit: "%", ref: "> 70", date: "2024-05-18" }
+  ],
+  medications: [
+    { name: "布地奈德福莫特罗吸入粉雾剂", spec: "160/4.5μg", usage: "每日2次 每次1吸", purpose: "吸入控制治疗" },
+    { name: "噻托溴铵吸入粉雾剂", spec: "18μg", usage: "每日1次 每次1粒", purpose: "长效支气管扩张" }
+  ],
+  medicationProfiles: {
+    rp002: [
+      { name: "布地奈德福莫特罗吸入粉雾剂", spec: "160/4.5μg", usage: "每日2次 每次1吸", purpose: "维持治疗" },
+      { name: "孟鲁司特钠片", spec: "10mg", usage: "每晚1次 每次1片", purpose: "减轻夜间咳嗽" }
+    ],
+    慢阻肺: [
+      { name: "噻托溴铵吸入粉雾剂", spec: "18μg", usage: "每日1次 每次1粒", purpose: "长效支气管扩张" },
+      { name: "乙酰半胱氨酸颗粒", spec: "0.2g", usage: "每日3次 每次1包", purpose: "祛痰" }
+    ],
+    肺部感染: [
+      { name: "盐酸氨溴索口服溶液", spec: "30mg/10ml", usage: "每日3次 每次10ml", purpose: "化痰" },
+      { name: "对乙酰氨基酚片", spec: "0.5g", usage: "发热时按需使用", purpose: "退热" }
+    ],
+    哮喘: [
+      { name: "布地奈德福莫特罗吸入粉雾剂", spec: "160/4.5μg", usage: "每日2次 每次1吸", purpose: "控制治疗" },
+      { name: "沙丁胺醇气雾剂", spec: "100μg", usage: "喘息时按需吸入", purpose: "急救缓解" }
+    ],
+    支气管扩张: [
+      { name: "乙酰半胱氨酸泡腾片", spec: "0.6g", usage: "每日1次 每次1片", purpose: "祛痰" },
+      { name: "生理盐水雾化", spec: "5ml", usage: "每日1-2次", purpose: "气道廓清" }
+    ],
+    睡眠呼吸暂停: [
+      { name: "CPAP治疗", spec: "夜间", usage: "每晚使用", purpose: "改善夜间低氧" },
+      { name: "体重管理处方", spec: "生活方式", usage: "持续执行", purpose: "非药物干预" }
+    ],
+    肺结节随访: []
+  },
+  consultDialog: [
+    { role: "doctor", time: "09:31:12", text: "最近咳嗽、咳痰和气喘有没有加重？" },
+    { role: "patient", time: "09:31:18", text: "这几天痰比以前多，活动以后喘得明显。" },
+    { role: "doctor", time: "09:31:27", text: "有没有发热，血氧测过吗？吸入药最近规律用吗？" },
+    { role: "patient", time: "09:31:42", text: "没明显发热，血氧有时候94，吸入药偶尔会忘。" }
+  ],
+  aiAssistantHistory: [
+    { role: "assistant", text: "您好，我可以协助整理呼吸症状、胸部影像、炎症指标和吸入用药情况。", time: "09:31" }
+  ],
+  aiResponses: {
+    summary: "患者为呼吸科随访患者，近期咳嗽咳痰及活动后气促加重，需结合胸部影像、血氧、炎症指标和吸入治疗依从性评估急性加重风险。",
+    labs: "炎症指标和血氧提示需关注感染或急性加重风险：CRP升高，SpO2偏低，建议结合胸部CT和痰液情况判断。",
+    medication: "建议复核吸入装置使用方法和依从性；根据症状、痰量、血氧和炎症指标决定是否调整支扩、祛痰或抗感染方案。",
+    record: "主诉：咳嗽咳痰伴活动后气促加重。现病史：患者近期痰量增加，活动后气喘明显，血氧偶有下降，需评估感染及慢性气道病急性加重。"
+  }
+};
+
+window.MedicalMock.departments = {
+  cardiology: window.MedicalMock,
+  respiratory: respiratoryData
+};
+
+window.MedicalMock.departmentOptions = [
+  { key: "cardiology", name: "心血管内科" },
+  { key: "respiratory", name: "呼吸科" }
+];
+
+window.MedicalMock.defaultDepartmentKey = "cardiology";

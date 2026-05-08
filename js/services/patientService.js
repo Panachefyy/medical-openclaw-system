@@ -1,6 +1,12 @@
 (function () {
+  let departmentKey = window.MedicalMock.defaultDepartmentKey || "cardiology";
+
+  function departmentData(key = departmentKey) {
+    return window.MedicalMock.departments?.[key] || window.MedicalMock;
+  }
+
   function countTabs(patients) {
-    return window.PatientStats.countStatusTabs(window.MedicalMock.statusTabs, patients);
+    return window.PatientStats.countStatusTabs(departmentData().statusTabs, patients);
   }
 
   function normalizePatient(raw) {
@@ -29,8 +35,9 @@
   }
 
   function normalizeContext(raw, patient) {
-    const mock = window.MedicalMock;
+    const mock = departmentData();
     const historyRows = raw.hypertensionHistory || raw.history?.rows || raw.history?.hypertension || mock.hypertensionHistory;
+    const medications = raw.medications || medicationRows(patient, mock);
     return {
       patient,
       history: raw.history || {
@@ -44,7 +51,7 @@
       ultrasound: raw.ultrasound || raw.exams?.ultrasound || mock.ultrasound,
       lipids: raw.lipids || raw.trends?.lipids || mock.lipids,
       lis: raw.lis || raw.labs || mock.lis,
-      medications: raw.medications || mock.medications,
+      medications,
       consultDialog: raw.consultDialog || raw.dialog || mock.consultDialog,
       diagnoses: raw.diagnoses || [],
       vitals: raw.vitals || {},
@@ -59,15 +66,26 @@
   async function fetchTodayVisits() {
     const config = window.AppConfig.getConfig();
     if (!config.apiBaseUrl) {
-      const patients = window.MedicalMock.patients.map(normalizePatient);
-      return { appMeta: window.MedicalMock.appMeta || {}, patients, statusTabs: countTabs(patients), source: "mock" };
+      const mock = departmentData();
+      const patients = mock.patients.map(normalizePatient);
+      return {
+        appMeta: mock.appMeta || {},
+        departmentOptions: getDepartmentOptions(),
+        assistantMessages: mock.aiAssistantHistory || [],
+        patients,
+        statusTabs: countTabs(patients),
+        source: "mock"
+      };
     }
 
-    const payload = await window.HttpClient.request(config.patientEndpoints.todayVisits);
+    const payload = await window.HttpClient.request(config.patientEndpoints.todayVisits, {
+      query: { department: departmentKey }
+    });
     const rows = Array.isArray(payload) ? payload : payload?.patients || payload?.data || [];
     const patients = rows.map(normalizePatient);
     return {
       appMeta: payload?.appMeta || {},
+      departmentOptions: payload?.departmentOptions || getDepartmentOptions(),
       patients,
       statusTabs: payload?.statusTabs || countTabs(patients),
       source: "api"
@@ -80,9 +98,32 @@
 
     const path = config.patientEndpoints.visitContext.replace("{visitId}", encodeURIComponent(patient.visitNo));
     const payload = await window.HttpClient.request(path, {
-      query: { patientId: patient.id }
+      query: { patientId: patient.id, department: departmentKey }
     });
     return normalizeContext(payload || {}, patient);
+  }
+
+  function medicationRows(patient, mock) {
+    const profiles = mock.medicationProfiles || {};
+    if (profiles[patient.id]) return profiles[patient.id];
+    const match = Object.keys(profiles).find((key) => String(patient.tag || "").includes(key));
+    return match ? profiles[match] : mock.medications || [];
+  }
+
+  function setDepartmentKey(nextKey) {
+    if (window.MedicalMock.departments?.[nextKey]) departmentKey = nextKey;
+  }
+
+  function getDepartmentKey() {
+    return departmentKey;
+  }
+
+  function getDepartmentOptions() {
+    return window.MedicalMock.departmentOptions || [{ key: departmentKey, name: departmentData().appMeta?.departmentName || "科室" }];
+  }
+
+  function getDepartmentData() {
+    return departmentData();
   }
 
   window.PatientService = {
@@ -90,6 +131,10 @@
     fetchVisitContext,
     mockContext,
     normalizePatient,
-    normalizeContext
+    normalizeContext,
+    setDepartmentKey,
+    getDepartmentKey,
+    getDepartmentOptions,
+    getDepartmentData
   };
 })();

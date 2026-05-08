@@ -3,12 +3,14 @@
   const viewModel = window.PatientViewModel;
   const state = {
     status: "waiting",
-    selectedPatientId: "p001",
+    selectedPatientId: mock.patients[0]?.id,
     search: "",
     activeMainTab: "dialog",
     patients: [...mock.patients],
     statusTabs: [...mock.statusTabs],
     appMeta: mock.appMeta || {},
+    departmentKey: window.PatientService.getDepartmentKey(),
+    departmentOptions: window.PatientService.getDepartmentOptions(),
     patientContext: window.PatientService.mockContext(mock.patients[0]),
     skillResults: {},
     dataLoading: false,
@@ -609,7 +611,7 @@
   function renderAll() {
     const patients = filteredPatients();
     if (!patients.some((patient) => patient.id === state.selectedPatientId)) {
-      state.selectedPatientId = patients[0]?.id || state.patients.find((patient) => patient.status === state.status)?.id || mock.patients[0].id;
+      state.selectedPatientId = patients[0]?.id || state.patients.find((patient) => patient.status === state.status)?.id || state.patients[0]?.id || mock.patients[0].id;
     }
     renderStatusTabs();
     renderDepartmentName();
@@ -621,6 +623,9 @@
   function renderDepartmentName() {
     if (els.departmentName) {
       els.departmentName.textContent = state.appMeta.departmentName || selectedPatient().department || "--";
+      els.departmentName.setAttribute("role", "button");
+      els.departmentName.setAttribute("tabindex", "0");
+      els.departmentName.setAttribute("title", "点击切换科室");
     }
   }
 
@@ -782,6 +787,8 @@
       state.patients = result.patients;
       state.statusTabs = result.statusTabs;
       state.appMeta = result.appMeta || state.appMeta;
+      state.departmentOptions = result.departmentOptions || state.departmentOptions;
+      if (result.assistantMessages?.length) state.assistantMessages = [...result.assistantMessages];
       if (!state.patients.some((patient) => patient.id === state.selectedPatientId)) {
         state.selectedPatientId = state.patients.find((patient) => patient.status === state.status)?.id || state.patients[0]?.id || state.selectedPatientId;
       }
@@ -799,6 +806,12 @@
 
   function bindEvents() {
     document.addEventListener("click", (event) => {
+      const departmentButton = event.target.closest("#departmentName");
+      if (departmentButton) {
+        switchDepartment();
+        return;
+      }
+
       const aiPanelToggle = event.target.closest("[data-ai-panel-toggle]");
       if (aiPanelToggle) {
         state.aiPanelCollapsed = !state.aiPanelCollapsed;
@@ -858,6 +871,13 @@
       }
     });
 
+    document.addEventListener("keydown", (event) => {
+      if (event.target.id !== "departmentName") return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      switchDepartment();
+    });
+
     document.addEventListener("submit", (event) => {
       if (event.target.id !== "assistantForm") return;
       event.preventDefault();
@@ -877,6 +897,20 @@
       els.refresh.classList.add("spinning");
       loadTodayPatients().finally(() => window.setTimeout(() => els.refresh.classList.remove("spinning"), 600));
     });
+  }
+
+  function switchDepartment() {
+    const options = state.departmentOptions;
+    if (options.length < 2) return;
+    const currentIndex = Math.max(0, options.findIndex((item) => item.key === state.departmentKey));
+    const next = options[(currentIndex + 1) % options.length];
+    state.departmentKey = next.key;
+    state.status = "waiting";
+    state.search = "";
+    state.skillResults = {};
+    state.assistantMessages = [{ role: "assistant", text: `已切换到${next.name}，可以继续查看患者或发起AI分析。`, time: nowTime() }];
+    window.PatientService.setDepartmentKey(next.key);
+    loadTodayPatients();
   }
 
   bindEvents();
