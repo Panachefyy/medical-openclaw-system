@@ -7,6 +7,7 @@ import { handleApi } from "./routes/api.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
+const forceFrontendMock = process.env.MEDICAL_FRONTEND_MOCK === "true";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -37,6 +38,26 @@ function serveStatic(req, res, url) {
   }
 
   const ext = path.extname(filePath);
+  if (forceFrontendMock && requestPath === "/index.html") {
+    const html = fs.readFileSync(filePath, "utf8");
+    const mockConfig = [
+      "<script>",
+      "window.MEDICAL_APP_CONFIG = {",
+      '  apiBaseUrl: "",',
+      "  openclaw: { stream: true }",
+      "};",
+      "window.OPENCLAW_CONFIG = { endpoint: \"\" };",
+      "</script>"
+    ].join("\n");
+    const body = html.replace("</head>", `${mockConfig}\n  </head>`);
+    res.writeHead(200, {
+      "Content-Type": mimeTypes[ext],
+      "Cache-Control": "no-cache"
+    });
+    res.end(body);
+    return;
+  }
+
   res.writeHead(200, {
     "Content-Type": mimeTypes[ext] || "application/octet-stream",
     "Cache-Control": "no-cache"
@@ -67,4 +88,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(serverConfig.port, "127.0.0.1", () => {
   console.log(`Medical OpenClaw workspace: http://127.0.0.1:${serverConfig.port}`);
   console.log(`OpenClaw Gateway WS: ${serverConfig.openclaw.wsUrl}`);
+  if (forceFrontendMock) console.log("Frontend data mode: mock only");
 });
