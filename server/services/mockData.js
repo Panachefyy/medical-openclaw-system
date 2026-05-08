@@ -4,6 +4,10 @@ export const statusTabs = [
   { key: "done", label: "已完成", count: 3 }
 ];
 
+export const appMeta = {
+  departmentName: "呼吸科"
+};
+
 function summary({ overview, features, important, medications, suggestions }) {
   return { overview, features, important, medications, suggestions };
 }

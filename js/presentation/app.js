@@ -8,6 +8,7 @@
     activeMainTab: "dialog",
     patients: [...mock.patients],
     statusTabs: [...mock.statusTabs],
+    appMeta: mock.appMeta || {},
     patientContext: window.PatientService.mockContext(mock.patients[0]),
     skillResults: {},
     dataLoading: false,
@@ -29,7 +30,8 @@
     aiPanel: document.getElementById("aiPanel"),
     workspace: document.querySelector(".workspace"),
     search: document.getElementById("globalSearch"),
-    refresh: document.getElementById("refreshList")
+    refresh: document.getElementById("refreshList"),
+    departmentName: document.getElementById("departmentName")
   };
 
   function $(selector, root = document) {
@@ -610,9 +612,16 @@
       state.selectedPatientId = patients[0]?.id || state.patients.find((patient) => patient.status === state.status)?.id || mock.patients[0].id;
     }
     renderStatusTabs();
+    renderDepartmentName();
     renderPatientList();
     renderMain();
     renderAssistant(selectedPatient());
+  }
+
+  function renderDepartmentName() {
+    if (els.departmentName) {
+      els.departmentName.textContent = state.appMeta.departmentName || selectedPatient().department || "--";
+    }
   }
 
   function refreshMainLayout() {
@@ -772,6 +781,7 @@
       const result = await window.PatientService.fetchTodayVisits();
       state.patients = result.patients;
       state.statusTabs = result.statusTabs;
+      state.appMeta = result.appMeta || state.appMeta;
       if (!state.patients.some((patient) => patient.id === state.selectedPatientId)) {
         state.selectedPatientId = state.patients.find((patient) => patient.status === state.status)?.id || state.patients[0]?.id || state.selectedPatientId;
       }

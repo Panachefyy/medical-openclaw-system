@@ -6,7 +6,7 @@
 
 - `index.html`：页面入口。
 - `styles.css`：完整页面样式。
-- `js/data/mock.js`：患者、检查、检验、用药、AI 示例回复等模拟数据。
+- `js/data/mock.js`：前端本地 mock 数据，用于心血管内科演示。
 - `js/core/config.js`：前端运行配置，包含业务 API 和 OpenClaw 代理接口地址。
 - `js/core/http.js`：统一请求封装，处理 JSON、超时和错误。
 - `js/domain/patientStats.js`：患者状态统计和列表筛选等纯业务工具。
@@ -17,19 +17,20 @@
 - `js/viewModels/patientViewModel.js`：把患者上下文加工成页面展示模型。
 - `js/presentation/app.js`：页面渲染、状态切换、图表、AI 对话交互。
 - `js/presentation/shell.js`：页面外壳行为，如全屏按钮和 service worker 注册。
+- `server/services/mockData.js`：后端 API mock 数据，用于呼吸科演示。
 
 ## 本地运行
 
-可直接打开 `index.html`，也可以启动静态服务：
+本地演示统一使用 mock 启动命令：
 
 ```bash
-python3 -m http.server 4174 --bind 127.0.0.1
+npm run start:mock
 ```
 
 访问：
 
 ```text
-http://127.0.0.1:4174/
+http://127.0.0.1:3500/
 ```
 
 如果要连接真实 OpenClaw Gateway，请使用内置 Node 代理服务：
@@ -44,32 +45,18 @@ npm start
 http://127.0.0.1:3000/
 ```
 
-开发时如果希望保存文件后浏览器自动刷新，可以使用内置热加载服务：
-
-```bash
-python3 dev-server.py --port 4174
-```
-
-访问：
-
-```text
-http://127.0.0.1:4174/
-```
-
-热加载模式会临时禁用 service worker，避免 PWA 缓存影响开发预览。
-
 ## Chrome 安装版（PWA）
 
-项目支持通过 Chrome 安装为本地应用。先启动本地静态服务：
+项目支持通过 Chrome 安装为本地应用。先启动本地 mock 服务：
 
 ```bash
-python3 -m http.server 4174 --bind 127.0.0.1
+npm run start:mock
 ```
 
 然后用 Chrome 访问：
 
 ```text
-http://127.0.0.1:4174/
+http://127.0.0.1:3500/
 ```
 
 在地址栏右侧点击“安装”图标，或进入 Chrome 菜单：
@@ -132,7 +119,7 @@ npm start
 </script>
 ```
 
-未配置 `apiBaseUrl` 时，页面会自动使用 `js/data/mock.js` 的本地模拟数据和模拟 skill 流式结果。
+未配置 `apiBaseUrl` 时，页面会自动使用 `js/data/mock.js` 的心血管内科演示数据和模拟 skill 流式结果。
 
 ### 患者数据接口
 
@@ -146,6 +133,9 @@ GET /api/visits/today?status=waiting
 
 ```json
 {
+  "appMeta": {
+    "departmentName": "呼吸科"
+  },
   "patients": [],
   "statusTabs": [
     { "key": "waiting", "label": "待诊", "count": 8 },

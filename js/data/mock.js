@@ -1,4 +1,7 @@
 window.MedicalMock = {
+  appMeta: {
+    departmentName: "心血管内科"
+  },
   statusTabs: [
     { key: "waiting", label: "待诊", count: 8 },
     { key: "active", label: "接诊中", count: 2 },

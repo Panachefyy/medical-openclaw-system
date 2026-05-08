@@ -1,4 +1,4 @@
-import { buildMockContext, patients, statusTabs } from "../services/mockData.js";
+import { appMeta, buildMockContext, patients, statusTabs } from "../services/mockData.js";
 import { createOpenClawGatewayClient } from "../services/openclawGatewayClient.js";
 import { readJson, sendJson, sendSse } from "../http/responses.js";
 
@@ -36,7 +36,7 @@ export async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/visits/today") {
     const status = url.searchParams.get("status");
     const filtered = status ? patients.filter((patient) => patient.status === status) : patients;
-    sendJson(res, 200, { patients: filtered, statusTabs });
+    sendJson(res, 200, { appMeta, patients: filtered, statusTabs });
     return true;
   }
 

@@ -60,13 +60,14 @@
     const config = window.AppConfig.getConfig();
     if (!config.apiBaseUrl) {
       const patients = window.MedicalMock.patients.map(normalizePatient);
-      return { patients, statusTabs: countTabs(patients), source: "mock" };
+      return { appMeta: window.MedicalMock.appMeta || {}, patients, statusTabs: countTabs(patients), source: "mock" };
     }
 
     const payload = await window.HttpClient.request(config.patientEndpoints.todayVisits);
     const rows = Array.isArray(payload) ? payload : payload?.patients || payload?.data || [];
     const patients = rows.map(normalizePatient);
     return {
+      appMeta: payload?.appMeta || {},
       patients,
       statusTabs: payload?.statusTabs || countTabs(patients),
       source: "api"
